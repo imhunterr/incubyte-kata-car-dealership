@@ -123,6 +123,29 @@ describe('apiRequest', () => {
     expect(error).toMatchObject({ status: 500, message: 'Request failed (500)' })
   })
 
+  it('falls back to a generic message when a JSON error has no usable detail', async () => {
+    server.use(http.get('*/api/odd', () => HttpResponse.json({ error: 'nope' }, { status: 502 })))
+
+    const error = await apiRequest('/odd').catch((caught: unknown) => caught)
+
+    expect(error).toMatchObject({ status: 502, message: 'Request failed (502)' })
+  })
+
+  it('shows a validation message without a field name when it has no location', async () => {
+    server.use(
+      http.get('*/api/search', () =>
+        HttpResponse.json(
+          { detail: [{ loc: ['body'], msg: 'min_price must not be greater than max_price' }] },
+          { status: 422 },
+        ),
+      ),
+    )
+
+    const error = await apiRequest('/search').catch((caught: unknown) => caught)
+
+    expect(error).toMatchObject({ message: 'min_price must not be greater than max_price' })
+  })
+
   it('reports a network failure as an ApiError with status 0', async () => {
     server.use(http.get('*/api/offline', () => HttpResponse.error()))
 
