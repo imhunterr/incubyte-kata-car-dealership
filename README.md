@@ -36,6 +36,17 @@ make dev-web    # serves the SPA on http://localhost:5173 (proxies /api to the A
 
 Run `make help` to see every available task.
 
+### Creating an admin
+
+Registration through the API always creates a regular user, so nobody can
+grant themselves admin rights. Admins are created, or existing users promoted,
+from the command line:
+
+```bash
+cd backend
+uv run python -m app.cli create-admin --email admin@example.com   # prompts for a password
+```
+
 ## Configuration
 
 The backend reads its settings from environment variables or `backend/.env`
@@ -48,6 +59,21 @@ The backend reads its settings from environment variables or `backend/.env`
 | `TEST_DATABASE_URL` | Database used by the test suite (recreated).   |
 | `DB_PORT`           | Host port for the compose PostgreSQL (`5434`). |
 | `VITE_API_PROXY`    | API URL the Vite dev server proxies `/api` to. |
+
+## Design decisions
+
+- **Inventory changes are admin-only.** The brief marks only `DELETE` and
+  `restock` as admin-only, but reserves the add/update UI for admins. The API
+  enforces the same rule server-side for `POST` and `PUT /api/vehicles`, so a
+  regular user cannot change prices or stock by calling the API directly.
+- **Roles are read from the database on every request**, not trusted from the
+  token, so demoting or deleting a user takes effect immediately.
+- **Login failures are indistinguishable.** An unknown e-mail and a wrong
+  password return the same 401, and take comparable time, so the endpoint
+  cannot be used to discover registered e-mails.
+- **E-mails are case-insensitive** (normalised to lower case), and the
+  database's unique constraint is the single, race-safe guard against
+  duplicates.
 
 ## Project layout
 

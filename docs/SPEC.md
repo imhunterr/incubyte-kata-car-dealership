@@ -121,40 +121,40 @@ Tests are grouped by slice, in the order they are built. `[x]` = done.
 ### Slice 1 — Auth
 
 Register
-- [ ] Valid e-mail + password → 201 with `id`, `email`, `role = "user"`.
-- [ ] Response never includes the password or its hash.
-- [ ] Password is stored hashed (stored value ≠ plain text, verifies with Argon2).
-- [ ] Duplicate e-mail → 409.
-- [ ] Duplicate e-mail with different letter case → 409.
-- [ ] Invalid e-mail → 422.
-- [ ] Password shorter than 8 characters → 422.
-- [ ] Missing fields → 422.
-- [ ] A `role` sent in the body is ignored (still `user`).
+- [x] Valid e-mail + password → 201 with `id`, `email`, `role = "user"`.
+- [x] Response never includes the password or its hash.
+- [x] Password is stored hashed (stored value ≠ plain text, verifies with Argon2).
+- [x] Duplicate e-mail → 409.
+- [x] Duplicate e-mail with different letter case → 409.
+- [x] Invalid e-mail → 422.
+- [x] Password shorter than 8 characters → 422.
+- [x] Missing fields → 422.
+- [x] A `role` sent in the body is ignored (still `user`).
 
 Login
-- [ ] Correct credentials → 200 with bearer token and user.
-- [ ] Token decodes to the right `sub` and `role`, and has an `exp`.
-- [ ] Wrong password → 401.
-- [ ] Unknown e-mail → 401 with the same message as a wrong password.
-- [ ] E-mail match is case-insensitive.
+- [x] Correct credentials → 200 with bearer token and user.
+- [x] Token decodes to the right `sub` and `role`, and has an `exp`.
+- [x] Wrong password → 401.
+- [x] Unknown e-mail → 401 with the same message as a wrong password.
+- [x] E-mail match is case-insensitive.
 
 Token guard (exercised through `GET /api/auth/me` and an admin-only route)
-- [ ] Valid token → 200 with the current user.
-- [ ] No `Authorization` header → 401.
-- [ ] Malformed header (not `Bearer …`) → 401.
-- [ ] Token signed with another key → 401.
-- [ ] Expired token → 401.
-- [ ] Token for a deleted user → 401.
-- [ ] Non-admin on an admin route → 403; admin → allowed.
-- [ ] Role is read from the database, so a demoted admin's old token no longer grants admin.
+- [x] Valid token → 200 with the current user.
+- [x] No `Authorization` header → 401.
+- [x] Malformed header (not `Bearer …`) → 401.
+- [x] Token signed with another key → 401.
+- [x] Expired token → 401.
+- [x] Token for a deleted user → 401.
+- [x] Non-admin on an admin route → 403; admin → allowed.
+- [x] Role is read from the database, so a demoted admin's old token no longer grants admin.
 
 Security unit tests
-- [ ] `hash_password` / `verify_password` round-trip; wrong password fails.
-- [ ] `create_access_token` / `decode_access_token` round-trip.
+- [x] `hash_password` / `verify_password` round-trip; wrong password fails.
+- [x] `create_access_token` / `decode_access_token` round-trip.
 
 Admin CLI
-- [ ] `create-admin` creates a user with role `admin`.
-- [ ] `create-admin` promotes an existing user to `admin`.
+- [x] `create-admin` creates a user with role `admin`.
+- [x] `create-admin` promotes an existing user to `admin`.
 
 ### Slice 2 — Vehicles CRUD
 
