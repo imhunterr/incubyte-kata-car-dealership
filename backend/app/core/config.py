@@ -17,6 +17,12 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://dealership:dealership@localhost:5434/dealership"
 
+    # Secret used to sign access tokens. The default is for local development
+    # only; any shared or deployed environment must set JWT_SECRET_KEY.
+    jwt_secret_key: str = "local-development-only-insecure-jwt-secret"
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60
+
 
 @lru_cache
 def get_settings() -> Settings:
