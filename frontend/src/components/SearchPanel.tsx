@@ -16,13 +16,22 @@ import { SelectField } from './SelectField'
 import { TextField } from './TextField'
 
 interface SearchPanelProps {
+  id?: string
+  /** Extra classes for the form, e.g. to hide it on small screens. */
+  className?: string
   /** Filters the form starts with: the ones currently applied. */
   initialFilters?: VehicleSearch
   onSearch: (filters: VehicleSearch) => void
   onClear: () => void
 }
 
-export function SearchPanel({ initialFilters = {}, onSearch, onClear }: SearchPanelProps) {
+export function SearchPanel({
+  id,
+  className = '',
+  initialFilters = {},
+  onSearch,
+  onClear,
+}: SearchPanelProps) {
   const [filters, setFilters] = useState({ ...EMPTY_FILTERS, ...initialFilters })
   const [priceError, setPriceError] = useState<string | undefined>()
 
@@ -45,11 +54,12 @@ export function SearchPanel({ initialFilters = {}, onSearch, onClear }: SearchPa
 
   return (
     <form
+      id={id}
       noValidate
       role="search"
       aria-label="Filter vehicles"
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-2xl border border-navy-100 bg-white p-5 shadow-sm"
+      className={`space-y-4 rounded-2xl border border-navy-100 bg-white p-5 shadow-sm ${className}`}
     >
       <h2 className="text-base font-bold">Filters</h2>
 

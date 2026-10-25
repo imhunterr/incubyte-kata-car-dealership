@@ -5,7 +5,7 @@
  * Loading, empty and error states are all explicit, and the outcome of each
  * purchase is announced (`role="status"` for success, an alert for errors).
  */
-import { useState } from 'react'
+import { useId, useState } from 'react'
 
 import { ApiError, messageFor } from '../api/client'
 import type { Vehicle } from '../api/types'
@@ -32,6 +32,10 @@ export function DashboardPage() {
   const [notice, setNotice] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [sortOrder, setSortOrder] = useState<SortOrder>('recommended')
+  // On small screens the filter panel is collapsed behind a toggle so the
+  // results are visible straight away; from `lg` up it is always shown.
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const filterPanelId = useId()
 
   async function handlePurchase(vehicle: Vehicle) {
     setPurchasingId(vehicle.id)
@@ -79,7 +83,18 @@ export function DashboardPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[18rem_1fr]">
         <aside>
+          <Button
+            variant="secondary"
+            aria-expanded={filtersOpen}
+            aria-controls={filterPanelId}
+            onClick={() => setFiltersOpen((open) => !open)}
+            className="mb-3 w-full lg:hidden"
+          >
+            {filtersOpen ? 'Hide filters' : 'Show filters'}
+          </Button>
           <SearchPanel
+            id={filterPanelId}
+            className={filtersOpen ? '' : 'hidden lg:block'}
             key={JSON.stringify(filters)}
             initialFilters={filters}
             onSearch={(newFilters) => void applyFilters(newFilters)}
