@@ -70,6 +70,33 @@ The backend reads its settings from environment variables or `backend/.env`
 | `DB_PORT`                     | Host port for the compose PostgreSQL (`5434`).                                    |
 | `VITE_API_PROXY`              | API URL the Vite dev server proxies `/api` to.                                    |
 
+## Deploying to Vercel
+
+[`vercel.json`](vercel.json) deploys the SPA and the API as two Vercel
+services: `/api/*` goes to FastAPI (`backend/app/main.py`), everything else to
+the Vite build.
+
+1. Create a hosted PostgreSQL database (e.g. Neon, Supabase or Vercel
+   Postgres). Its `postgres://…` URL can be used as-is.
+2. In the Vercel project, set these environment variables:
+   - `DATABASE_URL`: the hosted database URL.
+   - `JWT_SECRET_KEY`: a long random string, e.g. from
+     `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
+3. Prepare the database once, from your machine:
+
+   ```bash
+   cd backend
+   export DATABASE_URL='postgres://…'               # the hosted database
+   uv run alembic upgrade head                      # create the tables
+   uv run python -m app.cli create-admin --email you@example.com
+   uv run python -m app.cli seed-demo               # optional sample inventory
+   ```
+
+4. Deploy, then check `https://<your-app>/api/health` reports
+   `{"status": "ok", "database": "ok"}`.
+
+Run `alembic upgrade head` again whenever a new migration is added.
+
 ## Design decisions
 
 - **Inventory changes are admin-only.** The brief marks only `DELETE` and
