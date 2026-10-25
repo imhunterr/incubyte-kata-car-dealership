@@ -45,3 +45,13 @@ def update_vehicle(
 ) -> VehicleRead:
     """Replace a vehicle's details (admin only)."""
     return VehicleRead.model_validate(vehicles.update(vehicle_id, body))
+
+
+@router.delete(
+    "/{vehicle_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=_AUTH_ERRORS | _NOT_FOUND,
+)
+def delete_vehicle(vehicle_id: int, vehicles: VehicleServiceDep, _admin: AdminUserDep) -> None:
+    """Remove a vehicle from the inventory (admin only)."""
+    vehicles.delete(vehicle_id)

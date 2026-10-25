@@ -38,3 +38,8 @@ class VehicleRepository:
         self._session.commit()
         self._session.refresh(vehicle)
         return vehicle
+
+    def delete(self, vehicle: Vehicle) -> None:
+        """Remove a vehicle permanently."""
+        self._session.delete(vehicle)
+        self._session.commit()

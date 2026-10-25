@@ -33,6 +33,14 @@ class VehicleService:
             setattr(vehicle, field, value)
         return self._vehicles.save(vehicle)
 
+    def delete(self, vehicle_id: int) -> None:
+        """Remove a vehicle from the inventory.
+
+        Raises:
+            VehicleNotFoundError: If no vehicle has this id.
+        """
+        self._vehicles.delete(self._get_or_raise(vehicle_id))
+
     def _get_or_raise(self, vehicle_id: int) -> Vehicle:
         vehicle = self._vehicles.get(vehicle_id)
         if vehicle is None:
