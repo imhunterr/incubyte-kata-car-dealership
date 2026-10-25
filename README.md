@@ -7,6 +7,20 @@ A full-stack inventory system for a car dealership, built test-first
 - **Frontend:** React · TypeScript · Vite · Tailwind CSS
 - **Tests:** pytest (against a real PostgreSQL database) · Vitest + Testing Library
 
+## Live demo
+
+**https://incubyte-kata-car-dealership.vercel.app**
+
+Log in as an admin to try every feature, or register your own (regular)
+account from the login page:
+
+| Role  | Email                      | Password       |
+| ----- | -------------------------- | -------------- |
+| Admin | `admin_incubyte@gmail.com` | `incubyte0506` |
+
+This demo account is shared, so vehicles and stock may have been changed by
+other visitors.
+
 ## Features
 
 - **Accounts:** register and log in; JWT-secured API; admins are created from
