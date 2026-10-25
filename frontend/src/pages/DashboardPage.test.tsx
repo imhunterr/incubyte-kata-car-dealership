@@ -44,6 +44,32 @@ describe('DashboardPage: inventory', () => {
     expect(within(card).getByText('3 in stock')).toBeInTheDocument()
   })
 
+  it('shows each vehicle’s year, mileage, fuel type and transmission', async () => {
+    serveInventory()
+    renderDashboard()
+
+    const card = await findCard('Toyota Corolla')
+    expect(within(card).getByText('2022')).toBeInTheDocument()
+    expect(within(card).getByText('18,500 km')).toBeInTheDocument()
+    expect(within(card).getByText('Hybrid')).toBeInTheDocument()
+    expect(within(card).getByText('Automatic')).toBeInTheDocument()
+  })
+
+  it('flags the last unit in stock', async () => {
+    serveInventory()
+    renderDashboard()
+
+    expect(within(await findCard('Toyota RAV4')).getByText('Only 1 left')).toBeInTheDocument()
+    expect(within(await findCard('Toyota Corolla')).queryByText(/only \d+ left/i)).toBeNull()
+  })
+
+  it('opens with a hero inviting the user to find a car', async () => {
+    serveInventory()
+    renderDashboard()
+
+    expect(screen.getByRole('heading', { name: 'Find your next car' })).toBeInTheDocument()
+  })
+
   it('says how many vehicles are shown', async () => {
     serveInventory()
     renderDashboard()

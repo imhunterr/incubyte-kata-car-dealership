@@ -19,6 +19,10 @@ export const corolla: Vehicle = {
   category: 'sedan',
   price: '21999.99',
   quantity: 3,
+  year: 2022,
+  fuel_type: 'hybrid',
+  transmission: 'automatic',
+  mileage_km: 18500,
 }
 export const mustang: Vehicle = {
   id: 2,
@@ -27,6 +31,10 @@ export const mustang: Vehicle = {
   category: 'coupe',
   price: '38000.00',
   quantity: 0,
+  year: 2020,
+  fuel_type: 'petrol',
+  transmission: 'manual',
+  mileage_km: 27000,
 }
 export const rav4: Vehicle = {
   id: 3,
@@ -35,6 +43,10 @@ export const rav4: Vehicle = {
   category: 'suv',
   price: '32450.00',
   quantity: 1,
+  year: 2021,
+  fuel_type: 'petrol',
+  transmission: 'automatic',
+  mileage_km: 30000,
 }
 
 export const inventory: Vehicle[] = [corolla, mustang, rav4]
