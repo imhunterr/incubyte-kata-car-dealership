@@ -18,6 +18,7 @@ import { QuickFilters } from '../components/QuickFilters'
 import { SearchPanel } from '../components/SearchPanel'
 import { VehicleCard } from '../components/VehicleCard'
 import { SelectField } from '../components/SelectField'
+import { useShortlist } from '../hooks/useShortlist'
 import { compactFilters } from '../lib/filters'
 import { SORT_OPTIONS, sortVehicles, type SortOrder } from '../lib/sorting'
 
@@ -27,7 +28,10 @@ type LoadState =
   | { status: 'loaded'; vehicles: Vehicle[] }
 
 export function DashboardPage() {
-  const { request } = useAuth()
+  const { request, user } = useAuth()
+  // The dashboard is only rendered for logged-in users.
+  const shortlist = useShortlist(user!.id)
+  const [showShortlistOnly, setShowShortlistOnly] = useState(false)
   const [load, setLoad] = useState<LoadState>({ status: 'loading' })
   const [purchasingId, setPurchasingId] = useState<number | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -108,6 +112,24 @@ export function DashboardPage() {
     }
   }
 
+  const loadedVehicles = load.status === 'loaded' ? load.vehicles : []
+  const shownVehicles = sortVehicles(
+    showShortlistOnly ? loadedVehicles.filter((v) => shortlist.has(v.id)) : loadedVehicles,
+    sortOrder,
+  )
+
+  /** Why there is nothing to show, once loaded. */
+  function emptyMessage(): string {
+    if (showShortlistOnly) {
+      return shortlist.size === 0
+        ? 'Your shortlist is empty. Save vehicles to compare them here.'
+        : 'None of your shortlisted vehicles match this search.'
+    }
+    return hasFilters(filters)
+      ? 'No vehicles match your search.'
+      : 'No vehicles in the inventory yet.'
+  }
+
   return (
     <section>
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy-900 via-navy-800 to-navy-700 px-6 py-10 text-white shadow-lg sm:px-10">
@@ -151,18 +173,28 @@ export function DashboardPage() {
                 </p>
               )}
             </div>
-            <SelectField
-              label="Sort by"
-              value={sortOrder}
-              onChange={(event) => setSortOrder(event.target.value as SortOrder)}
-              className="w-52"
-            >
-              {SORT_OPTIONS.map(({ value, label }) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </SelectField>
+            <div className="flex flex-wrap items-end gap-3">
+              <Button
+                variant="secondary"
+                aria-pressed={showShortlistOnly}
+                onClick={() => setShowShortlistOnly((current) => !current)}
+                className={showShortlistOnly ? 'ring-2 ring-amber-400' : ''}
+              >
+                Shortlisted ({shortlist.size})
+              </Button>
+              <SelectField
+                label="Sort by"
+                value={sortOrder}
+                onChange={(event) => setSortOrder(event.target.value as SortOrder)}
+                className="w-52"
+              >
+                {SORT_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </SelectField>
+            </div>
           </div>
 
           <ActiveFilters
@@ -191,22 +223,22 @@ export function DashboardPage() {
               </div>
             )}
 
-            {load.status === 'loaded' && load.vehicles.length === 0 && (
+            {load.status === 'loaded' && shownVehicles.length === 0 && (
               <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-600">
-                {hasFilters(filters)
-                  ? 'No vehicles match your search.'
-                  : 'No vehicles in the inventory yet.'}
+                {emptyMessage()}
               </p>
             )}
 
-            {load.status === 'loaded' && load.vehicles.length > 0 && (
+            {shownVehicles.length > 0 && (
               <ul aria-label="Search results" className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                {sortVehicles(load.vehicles, sortOrder).map((vehicle) => (
+                {shownVehicles.map((vehicle) => (
                   <VehicleCard
                     key={vehicle.id}
                     vehicle={vehicle}
                     onPurchase={handlePurchase}
                     purchasing={purchasingId === vehicle.id}
+                    saved={shortlist.has(vehicle.id)}
+                    onToggleSaved={(saved) => shortlist.toggle(saved.id)}
                   />
                 ))}
               </ul>

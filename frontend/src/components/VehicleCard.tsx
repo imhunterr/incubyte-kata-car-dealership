@@ -18,9 +18,18 @@ interface VehicleCardProps {
   onPurchase: (vehicle: Vehicle) => void
   /** True while this vehicle's purchase request is in flight. */
   purchasing: boolean
+  /** True if the vehicle is on the user's shortlist. */
+  saved: boolean
+  onToggleSaved: (vehicle: Vehicle) => void
 }
 
-export function VehicleCard({ vehicle, onPurchase, purchasing }: VehicleCardProps) {
+export function VehicleCard({
+  vehicle,
+  onPurchase,
+  purchasing,
+  saved,
+  onToggleSaved,
+}: VehicleCardProps) {
   const soldOut = vehicle.quantity === 0
   const lowStock = !soldOut && vehicle.quantity <= LOW_STOCK_THRESHOLD
   const details = [
@@ -45,9 +54,23 @@ export function VehicleCard({ vehicle, onPurchase, purchasing }: VehicleCardProp
       </div>
 
       <div className="flex flex-1 flex-col p-5">
-        <h2 className="text-lg leading-snug font-semibold text-navy-900">
-          {vehicle.make} {vehicle.model}
-        </h2>
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-lg leading-snug font-semibold text-navy-900">
+            {vehicle.make} {vehicle.model}
+          </h2>
+          <button
+            type="button"
+            aria-label="Save to shortlist"
+            aria-pressed={saved}
+            title={saved ? 'Remove from shortlist' : 'Save to shortlist'}
+            onClick={() => onToggleSaved(vehicle)}
+            className={`-mt-1 -mr-1 grid h-9 w-9 shrink-0 place-items-center rounded-full transition hover:bg-navy-50 focus-visible:outline-2 focus-visible:outline-amber-500 ${
+              saved ? 'text-amber-500' : 'text-slate-400 hover:text-navy-700'
+            }`}
+          >
+            <HeartIcon filled={saved} />
+          </button>
+        </div>
 
         <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-600">
           {details.map((detail, index) => (
@@ -78,5 +101,21 @@ export function VehicleCard({ vehicle, onPurchase, purchasing }: VehicleCardProp
         </Button>
       </div>
     </li>
+  )
+}
+
+function HeartIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinejoin="round"
+    >
+      <path d="M12 20s-7-4.4-9.3-8.6C1 8.1 3 4.5 6.6 4.5c2.1 0 3.6 1.2 4.4 2.6.8-1.4 2.3-2.6 4.4-2.6 3.6 0 5.6 3.6 3.9 6.9C19 15.6 12 20 12 20Z" />
+    </svg>
   )
 }
