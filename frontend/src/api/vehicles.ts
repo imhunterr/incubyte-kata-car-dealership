@@ -3,7 +3,7 @@
  * function from `useAuth()`, so the token (and 401 handling) come for free.
  */
 import type { AuthContextValue } from '../auth/AuthContext'
-import type { Vehicle, VehicleSearch } from './types'
+import type { Vehicle, VehicleInput, VehicleSearch } from './types'
 
 type AuthRequest = AuthContextValue['request']
 
@@ -23,4 +23,8 @@ export function hasFilters(filters: VehicleSearch): boolean {
 
 export function purchaseVehicle(request: AuthRequest, id: number): Promise<Vehicle> {
   return request<Vehicle>(`/vehicles/${id}/purchase`, { method: 'POST' })
+}
+
+export function createVehicle(request: AuthRequest, input: VehicleInput): Promise<Vehicle> {
+  return request<Vehicle>('/vehicles', { method: 'POST', body: input })
 }

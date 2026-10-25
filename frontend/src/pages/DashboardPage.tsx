@@ -8,15 +8,18 @@
 import { useId, useState } from 'react'
 
 import { ApiError, messageFor } from '../api/client'
-import type { Vehicle } from '../api/types'
-import { hasFilters, purchaseVehicle } from '../api/vehicles'
+import type { Vehicle, VehicleInput } from '../api/types'
+import { createVehicle, hasFilters, purchaseVehicle } from '../api/vehicles'
 import { useAuth } from '../auth/useAuth'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { ActiveFilters } from '../components/ActiveFilters'
 import { DashboardHero } from '../components/DashboardHero'
+import { Modal } from '../components/Modal'
 import { SearchPanel } from '../components/SearchPanel'
 import { VehicleCard, type AdminActions } from '../components/VehicleCard'
+import { VehicleForm } from '../components/VehicleForm'
+import { EMPTY_VEHICLE_FORM } from '../lib/vehicleForm'
 import { SelectField } from '../components/SelectField'
 import { useInventory } from '../hooks/useInventory'
 import { useShortlist } from '../hooks/useShortlist'
@@ -27,7 +30,7 @@ export function DashboardPage() {
   // The dashboard is only rendered for logged-in users.
   const shortlist = useShortlist(user!.id)
   const [showShortlistOnly, setShowShortlistOnly] = useState(false)
-  const { load, filters, brands, applyFilters, replaceVehicle } = useInventory()
+  const { load, filters, brands, applyFilters, replaceVehicle, addVehicle } = useInventory()
   const [purchasingId, setPurchasingId] = useState<number | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -36,6 +39,9 @@ export function DashboardPage() {
   // results are visible straight away; from `lg` up it is always shown.
   const [filtersOpen, setFiltersOpen] = useState(false)
   const filterPanelId = useId()
+  /** The admin dialog currently open, if any. */
+  const [dialog, setDialog] = useState<{ kind: 'add' } | null>(null)
+  const closeDialog = () => setDialog(null)
 
   async function handlePurchase(vehicle: Vehicle) {
     setPurchasingId(vehicle.id)
@@ -53,6 +59,14 @@ export function DashboardPage() {
     } finally {
       setPurchasingId(null)
     }
+  }
+
+  async function handleCreate(input: VehicleInput) {
+    const created = await createVehicle(request, input)
+    addVehicle(created)
+    setDialog(null)
+    setActionError(null)
+    setNotice(`Added ${created.make} ${created.model}.`)
   }
 
   // Wired up to dialogs in the following steps.
@@ -120,7 +134,7 @@ export function DashboardPage() {
               )}
             </div>
             <div className="flex flex-wrap items-end gap-3">
-              {isAdmin && <Button onClick={() => undefined}>Add vehicle</Button>}
+              {isAdmin && <Button onClick={() => setDialog({ kind: 'add' })}>Add vehicle</Button>}
               <Button
                 variant="secondary"
                 aria-pressed={showShortlistOnly}
@@ -194,6 +208,16 @@ export function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {dialog?.kind === 'add' && (
+        <Modal title="Add vehicle" onClose={closeDialog}>
+          <VehicleForm
+            initialValues={EMPTY_VEHICLE_FORM}
+            onSubmit={handleCreate}
+            onCancel={closeDialog}
+          />
+        </Modal>
+      )}
     </section>
   )
 }

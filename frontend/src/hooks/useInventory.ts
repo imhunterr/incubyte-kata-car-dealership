@@ -79,5 +79,17 @@ export function useInventory() {
     )
   }
 
-  return { load, filters, brands, applyFilters, replaceVehicle }
+  /** Show a newly created vehicle at the end of the list and in the brand shortcuts. */
+  function addVehicle(vehicle: Vehicle) {
+    setLoad((current) =>
+      current.status === 'loaded'
+        ? { ...current, vehicles: [...current.vehicles, vehicle] }
+        : current,
+    )
+    setBrands((current) =>
+      current.includes(vehicle.make) ? current : [...current, vehicle.make].sort(),
+    )
+  }
+
+  return { load, filters, brands, applyFilters, replaceVehicle, addVehicle }
 }
