@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import type { User, Vehicle } from '../api/types'
-import { admin, corolla, customer, inventory, storeSession } from '../test/fixtures'
+import { admin, corolla, customer, inventory, mustang, storeSession } from '../test/fixtures'
 import { renderApp } from '../test/render'
 import { server } from '../test/server'
 
@@ -367,5 +367,80 @@ describe('DashboardPage: deleting a vehicle', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Delete vehicle' }))
 
     expect(await within(dialog).findByRole('alert')).toHaveTextContent('Vehicle not found')
+  })
+})
+
+describe('DashboardPage: restocking a vehicle', () => {
+  async function openRestockDialog(user: UserEvent, name = 'Ford Mustang') {
+    await user.click(within(card(name)).getByRole('button', { name: `Restock ${name}` }))
+    return screen.getByRole('dialog', { name: `Restock ${name}` })
+  }
+
+  it('shows the current stock and focuses the quantity', async () => {
+    const { user } = await renderLoadedDashboard()
+
+    const dialog = await openRestockDialog(user)
+
+    expect(within(dialog).getByText('Currently out of stock.')).toBeInTheDocument()
+    expect(within(dialog).getByLabelText('Units to add')).toHaveFocus()
+  })
+
+  it('adds the units and makes a sold-out vehicle purchasable again', async () => {
+    let request: { id: string; body: unknown } | undefined
+    server.use(
+      http.post('*/api/vehicles/:id/restock', async ({ params, request: req }) => {
+        request = { id: String(params.id), body: await req.json() }
+        return HttpResponse.json({ ...mustang, quantity: 5 })
+      }),
+    )
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openRestockDialog(user)
+
+    await user.type(within(dialog).getByLabelText('Units to add'), '5')
+    await user.click(within(dialog).getByRole('button', { name: 'Restock' }))
+
+    const mustangCard = card('Ford Mustang')
+    expect(await within(mustangCard).findByText('5 in stock')).toBeInTheDocument()
+    expect(within(mustangCard).getByRole('button', { name: 'Purchase' })).toBeEnabled()
+    expect(screen.getByRole('status')).toHaveTextContent('Ford Mustang now has 5 in stock.')
+    expect(request).toEqual({ id: String(mustang.id), body: { quantity: 5 } })
+  })
+
+  it.each([
+    ['', 'Enter how many units to add'],
+    ['0', 'Add between 1 and 10,000 units'],
+    ['10001', 'Add between 1 and 10,000 units'],
+    ['2.5', 'Add between 1 and 10,000 units'],
+  ])('rejects "%s" before calling the API', async (value, message) => {
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openRestockDialog(user)
+
+    if (value) await user.type(within(dialog).getByLabelText('Units to add'), value)
+    await user.click(within(dialog).getByRole('button', { name: 'Restock' }))
+
+    expect(within(dialog).getByText(message)).toBeInTheDocument()
+  })
+
+  it('shows API errors in the dialog', async () => {
+    server.use(
+      http.post('*/api/vehicles/:id/restock', () =>
+        HttpResponse.json({ detail: 'Vehicle not found' }, { status: 404 }),
+      ),
+    )
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openRestockDialog(user)
+
+    await user.type(within(dialog).getByLabelText('Units to add'), '2')
+    await user.click(within(dialog).getByRole('button', { name: 'Restock' }))
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Vehicle not found')
+  })
+
+  it('mentions the current stock of a vehicle that is in stock', async () => {
+    const { user } = await renderLoadedDashboard()
+
+    const dialog = await openRestockDialog(user, 'Toyota Corolla')
+
+    expect(within(dialog).getByText('Currently 3 in stock.')).toBeInTheDocument()
   })
 })
