@@ -210,6 +210,16 @@ describe('DashboardPage: adding a vehicle', () => {
     expect(screen.getByRole('dialog', { name: 'Add vehicle' })).toBeInTheDocument()
   })
 
+  it('stops the page behind it from scrolling while open', async () => {
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openAddDialog(user)
+    expect(document.body.style.overflow).toBe('hidden')
+
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+
+    expect(document.body.style.overflow).toBe('')
+  })
+
   it('closes without saving on Cancel', async () => {
     const { user } = await renderLoadedDashboard()
     const dialog = await openAddDialog(user)
