@@ -1,0 +1,57 @@
+[project]
+name = "dealership-api"
+version = "0.1.0"
+description = "REST API for the Car Dealership Inventory System."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.20.1",
+    "fastapi>=0.162.0",
+    "psycopg[binary]>=3.3.6",
+    "pwdlib[argon2]>=0.3.1",
+    "pydantic-settings>=2.16.1",
+    "pydantic[email]>=2.14.1",
+    "pyjwt>=2.15.1",
+    "sqlalchemy>=2.1.6",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "mypy>=2.4.0",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.2",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = [
+    # Starlette suggests a different HTTP client package for TestClient; httpx
+    # still works and is the established, well-known library, so we keep it.
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+# E/W: pycodestyle, F: pyflakes, I: isort, B: bugbear, UP: pyupgrade,
+# N: naming, SIM: simplifications, RUF: ruff-specific checks.
+select = ["E", "W", "F", "I", "B", "UP", "N", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["app"]
+plugins = ["pydantic.mypy"]
