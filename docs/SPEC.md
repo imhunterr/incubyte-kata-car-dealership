@@ -112,8 +112,8 @@ Tests are grouped by slice, in the order they are built. `[x]` = done.
 
 ### Slice 0 — Health
 
-- [ ] `GET /api/health` returns 200 `{"status": "ok"}`.
-- [ ] Health reports the database as reachable.
+- [x] `GET /api/health` returns 200 `{"status": "ok"}`.
+- [x] Health reports the database as reachable (503 when it is not).
 
 ### Slice 1 — Auth
 
