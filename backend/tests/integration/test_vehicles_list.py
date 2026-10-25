@@ -6,8 +6,7 @@ from fastapi.testclient import TestClient
 
 from app.core.categories import VehicleCategory
 from app.models.vehicle import Vehicle
-
-VEHICLES_URL = "/api/vehicles"
+from tests.helpers import VEHICLES_URL
 
 
 def test_empty_inventory_returns_an_empty_list(

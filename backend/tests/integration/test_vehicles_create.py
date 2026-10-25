@@ -9,8 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.categories import VehicleCategory
 from app.models.vehicle import Vehicle
-
-VEHICLES_URL = "/api/vehicles"
+from tests.helpers import VEHICLES_URL
 
 VALID_VEHICLE = {
     "make": "Toyota",

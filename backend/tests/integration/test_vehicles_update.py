@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.core.categories import VehicleCategory
 from app.models.vehicle import Vehicle
+from tests.helpers import vehicle_url
 
 UPDATED_VEHICLE = {
     "make": "Toyota",
@@ -22,16 +23,12 @@ UPDATED_VEHICLE = {
 }
 
 
-def _url(vehicle_id: int | str) -> str:
-    return f"/api/vehicles/{vehicle_id}"
-
-
 def test_admin_updates_a_vehicle_and_gets_it_back(
     client: TestClient, admin_headers: dict[str, str], create_vehicle: Callable[..., Vehicle]
 ) -> None:
     vehicle = create_vehicle()
 
-    response = client.put(_url(vehicle.id), json=UPDATED_VEHICLE, headers=admin_headers)
+    response = client.put(vehicle_url(vehicle.id), json=UPDATED_VEHICLE, headers=admin_headers)
 
     assert response.status_code == 200
     assert response.json() == {"id": vehicle.id, **UPDATED_VEHICLE}
@@ -45,7 +42,7 @@ def test_update_is_persisted(
 ) -> None:
     vehicle = create_vehicle()
 
-    client.put(_url(vehicle.id), json=UPDATED_VEHICLE, headers=admin_headers)
+    client.put(vehicle_url(vehicle.id), json=UPDATED_VEHICLE, headers=admin_headers)
 
     db_session.refresh(vehicle)
     assert vehicle.model == "Corolla Hybrid"
@@ -63,7 +60,7 @@ def test_update_leaves_other_vehicles_untouched(
     target = create_vehicle(model="Corolla")
     bystander = create_vehicle(make="Honda", model="Civic")
 
-    client.put(_url(target.id), json=UPDATED_VEHICLE, headers=admin_headers)
+    client.put(vehicle_url(target.id), json=UPDATED_VEHICLE, headers=admin_headers)
 
     db_session.refresh(bystander)
     assert (bystander.make, bystander.model) == ("Honda", "Civic")
@@ -72,14 +69,14 @@ def test_update_leaves_other_vehicles_untouched(
 def test_updating_an_unknown_vehicle_returns_404(
     client: TestClient, admin_headers: dict[str, str]
 ) -> None:
-    response = client.put(_url(999_999), json=UPDATED_VEHICLE, headers=admin_headers)
+    response = client.put(vehicle_url(999_999), json=UPDATED_VEHICLE, headers=admin_headers)
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Vehicle not found"
 
 
 def test_non_numeric_id_returns_422(client: TestClient, admin_headers: dict[str, str]) -> None:
-    response = client.put(_url("abc"), json=UPDATED_VEHICLE, headers=admin_headers)
+    response = client.put(vehicle_url("abc"), json=UPDATED_VEHICLE, headers=admin_headers)
 
     assert response.status_code == 422
 
@@ -104,7 +101,7 @@ def test_update_applies_the_same_validation_as_create(
     vehicle = create_vehicle()
 
     response = client.put(
-        _url(vehicle.id), json={**UPDATED_VEHICLE, **overrides}, headers=admin_headers
+        vehicle_url(vehicle.id), json={**UPDATED_VEHICLE, **overrides}, headers=admin_headers
     )
 
     assert response.status_code == 422
@@ -115,7 +112,7 @@ def test_partial_body_is_rejected_because_put_replaces_everything(
 ) -> None:
     vehicle = create_vehicle()
 
-    response = client.put(_url(vehicle.id), json={"price": "1000.00"}, headers=admin_headers)
+    response = client.put(vehicle_url(vehicle.id), json={"price": "1000.00"}, headers=admin_headers)
 
     assert response.status_code == 422
 
@@ -125,7 +122,7 @@ def test_regular_user_cannot_update_a_vehicle(
 ) -> None:
     vehicle = create_vehicle()
 
-    response = client.put(_url(vehicle.id), json=UPDATED_VEHICLE, headers=user_headers)
+    response = client.put(vehicle_url(vehicle.id), json=UPDATED_VEHICLE, headers=user_headers)
 
     assert response.status_code == 403
 
@@ -135,6 +132,6 @@ def test_anonymous_caller_cannot_update_a_vehicle(
 ) -> None:
     vehicle = create_vehicle()
 
-    response = client.put(_url(vehicle.id), json=UPDATED_VEHICLE)
+    response = client.put(vehicle_url(vehicle.id), json=UPDATED_VEHICLE)
 
     assert response.status_code == 401
