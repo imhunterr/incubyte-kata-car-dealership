@@ -83,22 +83,24 @@ export function VehicleCard({
           ))}
         </ul>
 
-        <div className="mt-4 flex items-end justify-between gap-2">
-          <p className="text-2xl font-extrabold tracking-tight text-navy-900">
-            {formatPrice(vehicle.price)}
-          </p>
-          <p className={`text-sm font-medium ${soldOut ? 'text-red-600' : 'text-emerald-700'}`}>
-            {soldOut ? 'Out of stock' : `${vehicle.quantity} in stock`}
-          </p>
-        </div>
+        <div className="mt-auto pt-4">
+          <div className="flex items-end justify-between gap-2">
+            <p className="text-2xl font-extrabold tracking-tight text-navy-900">
+              {formatPrice(vehicle.price)}
+            </p>
+            <p className={`text-sm font-medium ${soldOut ? 'text-red-600' : 'text-emerald-700'}`}>
+              {soldOut ? 'Out of stock' : `${vehicle.quantity} in stock`}
+            </p>
+          </div>
 
-        <Button
-          className="mt-5 w-full"
-          disabled={soldOut || purchasing}
-          onClick={() => onPurchase(vehicle)}
-        >
-          {purchasing ? 'Purchasing…' : 'Purchase'}
-        </Button>
+          <Button
+            className="mt-5 w-full"
+            disabled={soldOut || purchasing}
+            onClick={() => onPurchase(vehicle)}
+          >
+            {purchasing ? 'Purchasing…' : 'Purchase'}
+          </Button>
+        </div>
       </div>
     </li>
   )
