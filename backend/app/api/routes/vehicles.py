@@ -4,12 +4,12 @@ Reading the inventory requires any authenticated user; changing it requires
 an admin. Both rules are enforced here, on the server, through dependencies.
 """
 
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Query, status
 
 from app.api.deps import AdminUserDep, CurrentUserDep, VehicleServiceDep
-from app.schemas.vehicles import VehicleRead, VehicleWrite
+from app.schemas.vehicles import VehicleRead, VehicleSearch, VehicleWrite
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
@@ -29,6 +29,19 @@ _NOT_FOUND: dict[int | str, dict[str, Any]] = {
 def list_vehicles(vehicles: VehicleServiceDep, _user: CurrentUserDep) -> list[VehicleRead]:
     """List every vehicle, including ones that are out of stock, ordered by id."""
     return [VehicleRead.model_validate(vehicle) for vehicle in vehicles.list_all()]
+
+
+@router.get(
+    "/search",
+    responses={status.HTTP_401_UNAUTHORIZED: _AUTH_ERRORS[status.HTTP_401_UNAUTHORIZED]},
+)
+def search_vehicles(
+    criteria: Annotated[VehicleSearch, Query()],
+    vehicles: VehicleServiceDep,
+    _user: CurrentUserDep,
+) -> list[VehicleRead]:
+    """Search by make, model, category and/or price range (all optional, ANDed)."""
+    return [VehicleRead.model_validate(vehicle) for vehicle in vehicles.search(criteria)]
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, responses=_AUTH_ERRORS)

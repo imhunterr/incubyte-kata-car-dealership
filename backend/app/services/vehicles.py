@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from app.core.errors import VehicleNotFoundError
 from app.models.vehicle import Vehicle
 from app.repositories.vehicles import VehicleRepository
-from app.schemas.vehicles import VehicleWrite
+from app.schemas.vehicles import VehicleSearch, VehicleWrite
 
 
 class VehicleService:
@@ -17,6 +17,10 @@ class VehicleService:
     def list_all(self) -> Sequence[Vehicle]:
         """Return the whole inventory, including vehicles that are out of stock."""
         return self._vehicles.list_all()
+
+    def search(self, criteria: VehicleSearch) -> Sequence[Vehicle]:
+        """Return the vehicles matching every supplied filter (see :class:`VehicleSearch`)."""
+        return self._vehicles.search(**criteria.model_dump())
 
     def create(self, data: VehicleWrite) -> Vehicle:
         """Add a vehicle to the inventory and return it."""

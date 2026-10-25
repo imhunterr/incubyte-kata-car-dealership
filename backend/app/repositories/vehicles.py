@@ -1,11 +1,15 @@
 """Data access for :class:`~app.models.vehicle.Vehicle`."""
 
 from collections.abc import Sequence
+from decimal import Decimal
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import ColumnElement, select
+from sqlalchemy.orm import InstrumentedAttribute, Session
 
+from app.core.categories import VehicleCategory
 from app.models.vehicle import Vehicle
+
+_LIKE_ESCAPE = "\\"
 
 
 class VehicleRepository:
@@ -17,6 +21,35 @@ class VehicleRepository:
     def list_all(self) -> Sequence[Vehicle]:
         """Return every vehicle, oldest first (ordered by id)."""
         return self._session.scalars(select(Vehicle).order_by(Vehicle.id)).all()
+
+    def search(
+        self,
+        *,
+        make: str | None = None,
+        model: str | None = None,
+        category: VehicleCategory | None = None,
+        min_price: Decimal | None = None,
+        max_price: Decimal | None = None,
+    ) -> Sequence[Vehicle]:
+        """Return the vehicles matching every given filter, ordered by id.
+
+        ``None`` means "do not filter on this". ``make`` and ``model`` match
+        case-insensitively anywhere in the value; price bounds are inclusive.
+        """
+        conditions: list[ColumnElement[bool]] = []
+        if make is not None:
+            conditions.append(_contains(Vehicle.make, make))
+        if model is not None:
+            conditions.append(_contains(Vehicle.model, model))
+        if category is not None:
+            conditions.append(Vehicle.category == category)
+        if min_price is not None:
+            conditions.append(Vehicle.price >= min_price)
+        if max_price is not None:
+            conditions.append(Vehicle.price <= max_price)
+
+        query = select(Vehicle).where(*conditions).order_by(Vehicle.id)
+        return self._session.scalars(query).all()
 
     def get(self, vehicle_id: int) -> Vehicle | None:
         """Return the vehicle with this id, if any."""
@@ -43,3 +76,17 @@ class VehicleRepository:
         """Remove a vehicle permanently."""
         self._session.delete(vehicle)
         self._session.commit()
+
+
+def _contains(column: InstrumentedAttribute[str], term: str) -> ColumnElement[bool]:
+    """Case-insensitive "contains" that treats ``%``, ``_`` and ``\\`` literally.
+
+    Without escaping, user input such as ``%`` would act as a LIKE wildcard
+    and match every row.
+    """
+    escaped = (
+        term.replace(_LIKE_ESCAPE, _LIKE_ESCAPE * 2)
+        .replace("%", _LIKE_ESCAPE + "%")
+        .replace("_", _LIKE_ESCAPE + "_")
+    )
+    return column.ilike(f"%{escaped}%", escape=_LIKE_ESCAPE)

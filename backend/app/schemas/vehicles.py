@@ -3,7 +3,14 @@
 from decimal import Decimal
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
 from app.core.categories import VehicleCategory
 
@@ -42,3 +49,39 @@ class VehicleRead(BaseModel):
     category: VehicleCategory
     price: Decimal
     quantity: int
+
+
+class VehicleSearch(BaseModel):
+    """Query parameters of ``GET /api/vehicles/search``.
+
+    Every filter is optional and supplied filters are combined with AND:
+
+    - ``make`` / ``model``: case-insensitive *substring* match. Surrounding
+      whitespace is ignored, and a blank value means "no filter".
+    - ``category``: exact match.
+    - ``min_price`` / ``max_price``: inclusive bounds; ``min_price`` may not
+      exceed ``max_price``.
+    """
+
+    make: str | None = None
+    model: str | None = None
+    category: VehicleCategory | None = None
+    min_price: Decimal | None = Field(default=None, ge=0)
+    max_price: Decimal | None = Field(default=None, ge=0)
+
+    @field_validator("make", "model")
+    @classmethod
+    def _blank_means_no_filter(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return value.strip() or None
+
+    @model_validator(mode="after")
+    def _price_bounds_are_ordered(self) -> "VehicleSearch":
+        if (
+            self.min_price is not None
+            and self.max_price is not None
+            and self.min_price > self.max_price
+        ):
+            raise ValueError("min_price must not be greater than max_price")
+        return self
