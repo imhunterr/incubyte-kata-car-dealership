@@ -11,6 +11,7 @@ by default the ``dealership_test`` database created by ``docker compose``).
 
 import os
 from collections.abc import Callable, Iterator
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -21,12 +22,14 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.core.categories import VehicleCategory
 from app.core.roles import Role
 from app.core.security import hash_password
 from app.db.base import Base
 from app.db.session import get_session
 from app.main import create_app
 from app.models.user import User
+from app.models.vehicle import Vehicle
 from tests.helpers import DEFAULT_PASSWORD, auth_headers
 
 TEST_DATABASE_URL = os.environ.get(
@@ -124,3 +127,28 @@ def admin_headers(create_user: Callable[..., User]) -> dict[str, str]:
 def user_headers(create_user: Callable[..., User]) -> dict[str, str]:
     """``Authorization`` header for a freshly created regular user."""
     return auth_headers(create_user(email="customer@example.com", role=Role.USER))
+
+
+@pytest.fixture
+def create_vehicle(db_session: Session) -> Callable[..., Vehicle]:
+    """Factory that inserts a vehicle directly into the database.
+
+    Usage: ``create_vehicle(make="Honda", quantity=0)``. Every argument is
+    optional and defaults to an in-stock Toyota Corolla sedan.
+    """
+
+    def _create_vehicle(
+        make: str = "Toyota",
+        model: str = "Corolla",
+        category: VehicleCategory = VehicleCategory.SEDAN,
+        price: Decimal | str = "21999.99",
+        quantity: int = 3,
+    ) -> Vehicle:
+        vehicle = Vehicle(
+            make=make, model=model, category=category, price=Decimal(price), quantity=quantity
+        )
+        db_session.add(vehicle)
+        db_session.commit()
+        return vehicle
+
+    return _create_vehicle
