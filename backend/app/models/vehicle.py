@@ -3,7 +3,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, Enum, Numeric, String, func
+from sqlalchemy import CheckConstraint, DateTime, Enum, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.categories import VehicleCategory
@@ -14,6 +14,12 @@ class Vehicle(Base):
     """A vehicle model the dealership sells, with the number of units in stock."""
 
     __tablename__ = "vehicles"
+    __table_args__ = (
+        # Defence in depth: the API validates these too, but the database
+        # guarantees no code path can ever store impossible stock or prices.
+        CheckConstraint("quantity >= 0", name="quantity_non_negative"),
+        CheckConstraint("price > 0", name="price_positive"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     make: Mapped[str] = mapped_column(String(50))
