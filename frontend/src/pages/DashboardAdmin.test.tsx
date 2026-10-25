@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import type { User, Vehicle } from '../api/types'
-import { admin, customer, inventory, storeSession } from '../test/fixtures'
+import { admin, corolla, customer, inventory, storeSession } from '../test/fixtures'
 import { renderApp } from '../test/render'
 import { server } from '../test/server'
 
@@ -223,5 +223,87 @@ describe('DashboardPage: adding a vehicle', () => {
     await user.keyboard('{Escape}')
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+})
+
+describe('DashboardPage: editing a vehicle', () => {
+  async function openEditDialog(user: UserEvent, name = 'Toyota Corolla') {
+    await user.click(within(card(name)).getByRole('button', { name: `Edit ${name}` }))
+    return screen.getByRole('dialog', { name: `Edit ${name}` })
+  }
+
+  it('opens the form filled in with the vehicle’s details', async () => {
+    const { user } = await renderLoadedDashboard()
+
+    const dialog = await openEditDialog(user)
+
+    const form = within(dialog)
+    expect(form.getByLabelText('Make')).toHaveValue('Toyota')
+    expect(form.getByLabelText('Model')).toHaveValue('Corolla')
+    expect(form.getByLabelText('Category')).toHaveValue('sedan')
+    expect(form.getByLabelText('Price (USD)')).toHaveValue('21999.99')
+    expect(form.getByLabelText('Units in stock')).toHaveValue('3')
+    expect(form.getByLabelText('Year')).toHaveValue('2022')
+    expect(form.getByLabelText('Fuel type')).toHaveValue('hybrid')
+    expect(form.getByLabelText('Transmission')).toHaveValue('automatic')
+    expect(form.getByLabelText('Mileage (km)')).toHaveValue('18500')
+  })
+
+  it('saves the changes with PUT and updates the card', async () => {
+    let request: { id: string; body: unknown } | undefined
+    server.use(
+      http.put('*/api/vehicles/:id', async ({ params, request: req }) => {
+        const body = (await req.json()) as Record<string, unknown>
+        request = { id: String(params.id), body }
+        return HttpResponse.json({ ...corolla, ...body, price: '20500.00' })
+      }),
+    )
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openEditDialog(user)
+
+    await fillVehicleForm(user, dialog, { model: 'Corolla Cross', price: '20500' })
+    await user.click(within(dialog).getByRole('button', { name: 'Save vehicle' }))
+
+    expect(await screen.findByRole('heading', { name: 'Toyota Corolla Cross' })).toBeInTheDocument()
+    expect(within(card('Toyota Corolla Cross')).getByText('$20,500.00')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Saved Toyota Corolla Cross.')
+    expect(request).toEqual({
+      id: String(corolla.id),
+      body: {
+        make: 'Toyota',
+        model: 'Corolla Cross',
+        category: 'sedan',
+        price: '20500',
+        quantity: 3,
+        year: 2022,
+        fuel_type: 'hybrid',
+        transmission: 'automatic',
+        mileage_km: 18500,
+      },
+    })
+  })
+
+  it('validates edits like new vehicles', async () => {
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openEditDialog(user)
+
+    await fillVehicleForm(user, dialog, { make: '' })
+    await user.click(within(dialog).getByRole('button', { name: 'Save vehicle' }))
+
+    expect(within(dialog).getByText('Enter a make')).toBeInTheDocument()
+  })
+
+  it('shows API errors (e.g. the vehicle was deleted meanwhile)', async () => {
+    server.use(
+      http.put('*/api/vehicles/:id', () =>
+        HttpResponse.json({ detail: 'Vehicle not found' }, { status: 404 }),
+      ),
+    )
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openEditDialog(user)
+
+    await user.click(within(dialog).getByRole('button', { name: 'Save vehicle' }))
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Vehicle not found')
   })
 })
