@@ -24,14 +24,22 @@ themselves admin rights.
 
 ### Vehicle
 
-| Field      | Type    | Rules                                                                                   |
-| ---------- | ------- | --------------------------------------------------------------------------------------- |
-| `id`       | int     | Server-generated, unique.                                                               |
-| `make`     | string  | Required, 1–50 chars, surrounding whitespace trimmed.                                   |
-| `model`    | string  | Required, 1–50 chars, surrounding whitespace trimmed.                                   |
-| `category` | enum    | One of `sedan`, `suv`, `hatchback`, `coupe`, `convertible`, `truck`, `van`, `wagon`.    |
-| `price`    | decimal | Required, `> 0`, at most 2 decimal places, at most 10 digits. Serialised as a string.   |
-| `quantity` | int     | Units in stock. Required, `>= 0`. The database also enforces `>= 0` (CHECK constraint). |
+| Field          | Type    | Rules                                                                                   |
+| -------------- | ------- | --------------------------------------------------------------------------------------- |
+| `id`           | int     | Server-generated, unique.                                                               |
+| `make`         | string  | Required, 1–50 chars, surrounding whitespace trimmed.                                   |
+| `model`        | string  | Required, 1–50 chars, surrounding whitespace trimmed.                                   |
+| `category`     | enum    | One of `sedan`, `suv`, `hatchback`, `coupe`, `convertible`, `truck`, `van`, `wagon`.    |
+| `price`        | decimal | Required, `> 0`, at most 2 decimal places, at most 10 digits. Serialised as a string.   |
+| `quantity`     | int     | Units in stock. Required, `>= 0`. The database also enforces `>= 0` (CHECK constraint). |
+| `year`         | int     | Model year. Required, from 1990 to next calendar year.                                  |
+| `fuel_type`    | enum    | One of `petrol`, `diesel`, `cng`, `electric`, `hybrid`.                                 |
+| `transmission` | enum    | `manual` or `automatic`.                                                                |
+| `mileage_km`   | int     | Kilometres driven. Required, 0–1,000,000. The database enforces `>= 0`.                 |
+
+The brief requires `id`, `make`, `model`, `category`, `price` and `quantity`.
+`year`, `fuel_type`, `transmission` and `mileage_km` were added so buyers can
+compare used cars on the details that matter most to them.
 
 ---
 
@@ -85,9 +93,12 @@ All responses are JSON. Errors use FastAPI's shape: `{"detail": ...}`.
   - `category`: exact match on the enum.
   - `min_price`, `max_price`: inclusive bounds, each `>= 0`.
   - `min_price > max_price` → 422.
+  - `fuel_type`, `transmission`: exact match on the enum.
+  - `min_year`: model year `>=` this value.
+  - `max_mileage`: `mileage_km <=` this value (`>= 0`).
   - No params → same result as list.
-- **Update** — full replacement (`PUT`) of `make`, `model`, `category`,
-  `price`, `quantity`, with the same validation as create.
+- **Update** — full replacement (`PUT`) of every editable field, with the same
+  validation as create.
 - **Purchase** — decreases `quantity` by exactly 1. Done as a single atomic
   `UPDATE … SET quantity = quantity - 1 WHERE id = :id AND quantity > 0`, so
   concurrent purchases can never oversell or drive stock negative. If no row
@@ -101,8 +112,16 @@ All responses are JSON. Errors use FastAPI's shape: `{"detail": ...}`.
 ## 4. Frontend (React + TypeScript + Tailwind SPA)
 
 - Register and login forms with inline validation errors.
-- Dashboard listing all vehicles (make, model, category, price, stock).
-- Search and filter by make, model, category and price range.
+- Dashboard listing all vehicles as cards: make, model, category, price,
+  year, mileage, fuel, transmission, stock (with a low-stock badge), and an
+  illustration of the body type.
+- Search and filter by make, model, category, price range, fuel type,
+  transmission, minimum year and maximum mileage, in a filter panel.
+- Quick filters: body-type and brand shortcuts and price-range presets.
+- Active filters are shown as removable chips; results can be sorted (price,
+  year, mileage).
+- Shortlist: users can save vehicles (kept in the browser, per user) and view
+  only their saved vehicles.
 - A **Purchase** button on each vehicle, disabled when `quantity` is 0.
 - Admin-only UI: add, edit, delete and restock vehicles.
 - Responsive layout. Accessible labels on every form control.
@@ -242,6 +261,18 @@ Restock (admin)
 - [x] Migrations match the models and can be applied, reverted and re-applied
       (CI and `make migrations-check`).
 
+### Slice 4b — Richer vehicle data
+
+- [ ] Create/update/read include `year`, `fuel_type`, `transmission`, `mileage_km`.
+- [ ] Each new field is required on create and update → 422 when missing.
+- [ ] `year` outside 1990..next year, unknown fuel type or transmission,
+      mileage outside 0..1,000,000 or non-integer → 422.
+- [ ] Existing vehicles get sensible values from the migration.
+- [ ] The database rejects negative mileage (CHECK constraint).
+- [ ] Search by `fuel_type`, `transmission`, `min_year`, `max_mileage`,
+      combined with the other filters; invalid values → 422.
+- [ ] Demo data covers every fuel type and both transmissions.
+
 ### Slice 5 — Frontend
 
 - [x] Login form: submits credentials, stores the session, redirects to the dashboard.
@@ -252,6 +283,13 @@ Restock (admin)
 - [ ] Purchase button disabled when quantity is 0; enabled otherwise.
 - [ ] Clicking Purchase calls the API and updates the shown stock.
 - [ ] Search form sends the right query params.
+- [ ] Cards show year, mileage, fuel, transmission and a low-stock badge.
+- [ ] Filter panel covers fuel type, transmission, minimum year and maximum mileage.
+- [ ] Quick filters (body type, brand, price preset) apply in one click.
+- [ ] Active filters appear as chips; removing a chip re-runs the search.
+- [ ] Results can be sorted by price, year and mileage.
+- [ ] Shortlist: save/unsave from a card, persisted per user, and a
+      "Shortlisted" view.
 - [ ] Admin controls hidden for regular users, shown for admins.
 - [ ] Admin can add, edit, delete and restock vehicles through forms.
 - [x] A 401 from any API call logs the user out.
