@@ -14,3 +14,15 @@ Hi, i have to work on a project that unvolves making a web-app as a task. The id
 We can start by planning out the different parts of the project. We should start by defining the directory structure and the frameworks. Next would be the execution part of it.
 
 Do keep in mind to have exhaustive tests because the project is centered around TDD. And clean + exhaustively documented code is a must.
+
+---
+
+## Prompt 2 — 2026-10-25 20:31:05 IST
+
+Okay, few things to keep in mind -0 
+1. good catch on the red-green-refactor requirement.
+2. In the md file from deep-research, there is info pointing to subsequent interview rounds and stuff like that. We would like to not refernce things and mentions of that sort that are not directly tied to the exec of this project and i believe it is better not to mention the deep research doc at all as it stays out of the public repo in any code comments. 
+
+I have logged into github. There might be a rename issue from github's side tho. However this device is paired with the require gh account so you can go ahead with the repo creation and the push, it should be fine.
+
+Lets get started.
