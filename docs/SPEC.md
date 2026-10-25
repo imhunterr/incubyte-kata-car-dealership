@@ -57,6 +57,7 @@ All responses are JSON. Errors use FastAPI's shape: `{"detail": ...}`.
 | GET    | `/api/health`                  | —      | 200              |                                |
 | POST   | `/api/auth/register`           | —      | 201 user         | 409 duplicate, 422 invalid     |
 | POST   | `/api/auth/login`              | —      | 200 token + user | 401 bad credentials, 422       |
+| GET    | `/api/auth/me`                 | user   | 200 user         | 401                            |
 | POST   | `/api/vehicles`                | admin  | 201 vehicle      | 401, 403, 422                  |
 | GET    | `/api/vehicles`                | user   | 200 list         | 401                            |
 | GET    | `/api/vehicles/search`         | user   | 200 list         | 401, 422                       |
@@ -74,6 +75,8 @@ All responses are JSON. Errors use FastAPI's shape: `{"detail": ...}`.
   `{access_token, token_type: "bearer", user: {id, email, role}}`. An unknown
   e-mail and a wrong password give the **same** 401 message, so callers cannot
   probe which e-mails are registered.
+- **Me** — returns the authenticated user `{id, email, role}`; lets the SPA
+  confirm a stored token is still valid.
 - **List** — returns every vehicle, including ones with `quantity = 0` (the UI
   shows them with a disabled Purchase button). Ordered by `id`.
 - **Search** — query params, all optional and combinable (AND):
@@ -135,13 +138,15 @@ Login
 - [ ] Unknown e-mail → 401 with the same message as a wrong password.
 - [ ] E-mail match is case-insensitive.
 
-Token guard (exercised through a protected route)
+Token guard (exercised through `GET /api/auth/me` and an admin-only route)
+- [ ] Valid token → 200 with the current user.
 - [ ] No `Authorization` header → 401.
 - [ ] Malformed header (not `Bearer …`) → 401.
 - [ ] Token signed with another key → 401.
 - [ ] Expired token → 401.
 - [ ] Token for a deleted user → 401.
-- [ ] Non-admin on an admin route → 403.
+- [ ] Non-admin on an admin route → 403; admin → allowed.
+- [ ] Role is read from the database, so a demoted admin's old token no longer grants admin.
 
 Security unit tests
 - [ ] `hash_password` / `verify_password` round-trip; wrong password fails.
