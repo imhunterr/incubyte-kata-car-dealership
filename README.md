@@ -7,6 +7,22 @@ A full-stack inventory system for a car dealership, built test-first
 - **Frontend:** React · TypeScript · Vite · Tailwind CSS
 - **Tests:** pytest (against a real PostgreSQL database) · Vitest + Testing Library
 
+## Features
+
+- **Accounts:** register and log in; JWT-secured API; admins are created from
+  the command line.
+- **Browse:** every vehicle as a card with a body-type illustration, price,
+  year, mileage, fuel, transmission, stock and an "Only N left" badge.
+- **Search and filter:** make, model, body type, budget, fuel type,
+  transmission, model year and mileage, plus one-click body-type, brand and
+  budget shortcuts. Applied filters show as removable chips.
+- **Sort** by price, year or mileage.
+- **Shortlist** vehicles to compare later (saved per user in the browser).
+- **Purchase** in one click; the button is disabled when a vehicle is sold
+  out, and stock can never be oversold, even under concurrent purchases.
+- **Admin:** add, edit, delete and restock vehicles (API; admin UI in progress).
+- **Responsive** navy-and-amber design with accessible labels throughout.
+
 The behaviour the system implements, and the test list that drives it, is in
 [docs/SPEC.md](docs/SPEC.md).
 

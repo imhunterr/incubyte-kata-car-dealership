@@ -279,16 +279,18 @@ Restock (admin)
 - [x] Login form: shows the API error on 401.
 - [x] Register form: validates e-mail and password length before submitting.
 - [x] Protected route redirects anonymous users to login.
-- [ ] Dashboard lists vehicles from the API.
-- [ ] Purchase button disabled when quantity is 0; enabled otherwise.
-- [ ] Clicking Purchase calls the API and updates the shown stock.
-- [ ] Search form sends the right query params.
-- [ ] Cards show year, mileage, fuel, transmission and a low-stock badge.
-- [ ] Filter panel covers fuel type, transmission, minimum year and maximum mileage.
-- [ ] Quick filters (body type, brand, price preset) apply in one click.
-- [ ] Active filters appear as chips; removing a chip re-runs the search.
-- [ ] Results can be sorted by price, year and mileage.
-- [ ] Shortlist: save/unsave from a card, persisted per user, and a
+- [x] Dashboard lists vehicles from the API.
+- [x] Purchase button disabled when quantity is 0; enabled otherwise.
+- [x] Clicking Purchase calls the API and updates the shown stock.
+- [x] Search form sends the right query params.
+- [x] Cards show year, mileage, fuel, transmission and a low-stock badge.
+- [x] Filter panel covers fuel type, transmission, minimum year and maximum mileage.
+- [x] Quick filters (body type, brand, price preset) apply in one click.
+- [x] Active filters appear as chips; removing a chip re-runs the search.
+- [x] Results can be sorted by price, year and mileage.
+- [x] Loading, empty, error (with retry) and sold-out-race (409) states.
+- [x] On small screens the filter panel is collapsed behind "Show filters".
+- [x] Shortlist: save/unsave from a card, persisted per user, and a
       "Shortlisted" view.
 - [ ] Admin controls hidden for regular users, shown for admins.
 - [ ] Admin can add, edit, delete and restock vehicles through forms.
