@@ -16,6 +16,24 @@ class AuthService:
         """Create a regular (non-admin) account and return it.
 
         The role is always :attr:`Role.USER`; admins are created out-of-band.
+        E-mails are stored normalised (see :func:`normalize_email`).
+
+        Raises:
+            EmailAlreadyRegisteredError: If the e-mail is already taken.
         """
-        user = User(email=email, password_hash=hash_password(password), role=Role.USER)
+        user = User(
+            email=normalize_email(email),
+            password_hash=hash_password(password),
+            role=Role.USER,
+        )
         return self._users.add(user)
+
+
+def normalize_email(email: str) -> str:
+    """Canonical form of an e-mail address: trimmed and lower-cased.
+
+    Lower-casing the whole address (not just the domain) means
+    ``Alice@Example.com`` and ``alice@example.com`` are one account, which is
+    what users expect in practice.
+    """
+    return email.strip().lower()
