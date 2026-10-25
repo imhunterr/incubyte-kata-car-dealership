@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { admin, customer, inventory, storeSession } from '../test/fixtures'
+import { admin, customer, inventory, rav4, storeSession } from '../test/fixtures'
 import { renderApp } from '../test/render'
 import { server } from '../test/server'
 
@@ -91,6 +91,29 @@ describe('DashboardPage: shortlist', () => {
     await renderLoadedDashboard(admin)
 
     expect(saveButton('Toyota Corolla')).toHaveAttribute('aria-pressed', 'false')
+    expect(shortlistToggle()).toHaveTextContent('Shortlisted (0)')
+  })
+
+  it('says when no shortlisted vehicle matches the current search', async () => {
+    server.use(http.get('*/api/vehicles/search', () => HttpResponse.json([rav4])))
+    const { user } = await renderLoadedDashboard()
+    await user.click(saveButton('Toyota Corolla'))
+    await user.type(screen.getByLabelText('Make'), 'toyota')
+    await user.click(screen.getByRole('button', { name: 'Search' }))
+    await screen.findByText('1 vehicle')
+
+    await user.click(shortlistToggle())
+
+    expect(
+      screen.getByText('None of your shortlisted vehicles match this search.'),
+    ).toBeInTheDocument()
+  })
+
+  it('ignores stored shortlist data that is not a list', async () => {
+    localStorage.setItem(`dealership.shortlist.${customer.id}`, '{"1": true}')
+
+    await renderLoadedDashboard()
+
     expect(shortlistToggle()).toHaveTextContent('Shortlisted (0)')
   })
 

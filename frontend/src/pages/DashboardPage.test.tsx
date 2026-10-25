@@ -199,6 +199,28 @@ describe('DashboardPage: purchasing', () => {
     expect(within(card).getByRole('button', { name: 'Purchase' })).toBeDisabled()
   })
 
+  it('lets a new search win over a purchase that finishes while it is loading', async () => {
+    serveInventory()
+    server.use(
+      http.post('*/api/vehicles/:id/purchase', async () => {
+        await delay(300) // still running when the search below starts
+        return HttpResponse.json({ ...corolla, quantity: 2 })
+      }),
+      http.get('*/api/vehicles/search', async () => {
+        await delay(600) // outlasts the purchase
+        return HttpResponse.json([])
+      }),
+    )
+    const { user } = renderDashboard()
+    const card = await findCard('Toyota Corolla')
+
+    await user.click(within(card).getByRole('button', { name: 'Purchase' }))
+    await user.type(screen.getByLabelText('Make'), 'zzz')
+    await user.click(screen.getByRole('button', { name: 'Search' }))
+
+    expect(await screen.findByText('No vehicles match your search.')).toBeInTheDocument()
+  })
+
   it('reports other purchase failures without changing the stock', async () => {
     serveInventory()
     server.use(
