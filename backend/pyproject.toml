@@ -55,3 +55,9 @@ python_version = "3.13"
 strict = true
 files = ["app"]
 plugins = ["pydantic.mypy"]
+
+[tool.ruff.lint.isort]
+# The local ``alembic/`` migrations folder would otherwise make ruff treat the
+# third-party ``alembic`` package as first-party code.
+known-first-party = ["app"]
+known-third-party = ["alembic"]

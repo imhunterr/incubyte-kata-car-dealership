@@ -1,0 +1,5 @@
+"""SQLAlchemy ORM models.
+
+Every model module must be imported here so that importing ``app.models``
+registers all tables on ``Base.metadata`` (Alembic relies on this).
+"""

@@ -1,0 +1,27 @@
+# Local development stack.
+#   docker compose up -d db    -> PostgreSQL only (for running the API/tests on the host)
+#
+# Host ports are configurable so the stack can coexist with other local services.
+name: car-dealership
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: dealership
+      POSTGRES_PASSWORD: dealership
+      POSTGRES_DB: dealership
+    ports:
+      - "${DB_PORT:-5434}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # Runs once, on first start: creates the separate test database.
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dealership -d dealership"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  db-data:
