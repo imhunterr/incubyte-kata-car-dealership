@@ -17,6 +17,9 @@ _AUTH_ERRORS: dict[int | str, dict[str, Any]] = {
     status.HTTP_401_UNAUTHORIZED: {"description": "Missing or invalid access token"},
     status.HTTP_403_FORBIDDEN: {"description": "Admin privileges required"},
 }
+_NOT_FOUND: dict[int | str, dict[str, Any]] = {
+    status.HTTP_404_NOT_FOUND: {"description": "Vehicle not found"},
+}
 
 
 @router.get(
@@ -34,3 +37,11 @@ def create_vehicle(
 ) -> VehicleRead:
     """Add a vehicle to the inventory (admin only)."""
     return VehicleRead.model_validate(vehicles.create(body))
+
+
+@router.put("/{vehicle_id}", responses=_AUTH_ERRORS | _NOT_FOUND)
+def update_vehicle(
+    vehicle_id: int, body: VehicleWrite, vehicles: VehicleServiceDep, _admin: AdminUserDep
+) -> VehicleRead:
+    """Replace a vehicle's details (admin only)."""
+    return VehicleRead.model_validate(vehicles.update(vehicle_id, body))

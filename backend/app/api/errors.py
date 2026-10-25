@@ -16,6 +16,7 @@ from app.core.errors import (
     EmailAlreadyRegisteredError,
     InvalidCredentialsError,
     NotAuthenticatedError,
+    VehicleNotFoundError,
 )
 
 
@@ -43,6 +44,7 @@ ERROR_RESPONSES: dict[type[DomainError], ErrorResponse] = {
         headers={"WWW-Authenticate": "Bearer"},
     ),
     AdminRequiredError: ErrorResponse(status.HTTP_403_FORBIDDEN, "Admin privileges required"),
+    VehicleNotFoundError: ErrorResponse(status.HTTP_404_NOT_FOUND, "Vehicle not found"),
 }
 
 

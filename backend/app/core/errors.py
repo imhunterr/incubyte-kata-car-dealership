@@ -26,3 +26,7 @@ class NotAuthenticatedError(DomainError):
 
 class AdminRequiredError(DomainError):
     """The caller is authenticated but the action is reserved for admins."""
+
+
+class VehicleNotFoundError(DomainError):
+    """No vehicle exists with the requested id."""

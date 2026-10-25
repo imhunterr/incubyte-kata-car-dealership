@@ -18,6 +18,10 @@ class VehicleRepository:
         """Return every vehicle, oldest first (ordered by id)."""
         return self._session.scalars(select(Vehicle).order_by(Vehicle.id)).all()
 
+    def get(self, vehicle_id: int) -> Vehicle | None:
+        """Return the vehicle with this id, if any."""
+        return self._session.get(Vehicle, vehicle_id)
+
     def add(self, vehicle: Vehicle) -> Vehicle:
         """Persist a new vehicle and return it as stored.
 
@@ -25,6 +29,12 @@ class VehicleRepository:
         database holds (e.g. the price rounded to its 2-decimal column).
         """
         self._session.add(vehicle)
+        self._session.commit()
+        self._session.refresh(vehicle)
+        return vehicle
+
+    def save(self, vehicle: Vehicle) -> Vehicle:
+        """Commit changes made to an already-persisted vehicle and re-read it."""
         self._session.commit()
         self._session.refresh(vehicle)
         return vehicle
