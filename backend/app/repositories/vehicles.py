@@ -3,7 +3,7 @@
 from collections.abc import Sequence
 from decimal import Decimal
 
-from sqlalchemy import ColumnElement, select, update
+from sqlalchemy import ColumnElement, Update, select, update
 from sqlalchemy.orm import InstrumentedAttribute, Session
 
 from app.core.categories import VehicleCategory
@@ -87,16 +87,11 @@ class VehicleRepository:
             The updated vehicle, or ``None`` if it does not exist or is out of
             stock (the caller distinguishes the two).
         """
-        statement = (
+        return self._update_one(
             update(Vehicle)
             .where(Vehicle.id == vehicle_id, Vehicle.quantity > 0)
             .values(quantity=Vehicle.quantity - 1)
-            .returning(Vehicle)
-            .execution_options(populate_existing=True)
         )
-        vehicle = self._session.scalars(statement).one_or_none()
-        self._session.commit()
-        return vehicle
 
     def add_to_stock(self, vehicle_id: int, units: int) -> Vehicle | None:
         """Atomically increase a vehicle's stock by ``units``.
@@ -107,14 +102,20 @@ class VehicleRepository:
         Returns:
             The updated vehicle, or ``None`` if it does not exist.
         """
-        statement = (
+        return self._update_one(
             update(Vehicle)
             .where(Vehicle.id == vehicle_id)
             .values(quantity=Vehicle.quantity + units)
-            .returning(Vehicle)
-            .execution_options(populate_existing=True)
         )
-        vehicle = self._session.scalars(statement).one_or_none()
+
+    def _update_one(self, statement: Update) -> Vehicle | None:
+        """Run a single-row UPDATE, commit, and return the row as now stored.
+
+        ``RETURNING`` hands back the new values in the same round trip, and
+        ``populate_existing`` refreshes any copy already in the session.
+        """
+        returning = statement.returning(Vehicle).execution_options(populate_existing=True)
+        vehicle = self._session.scalars(returning).one_or_none()
         self._session.commit()
         return vehicle
 
