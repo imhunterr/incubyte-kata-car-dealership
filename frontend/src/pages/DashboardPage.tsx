@@ -1,5 +1,6 @@
 /**
- * The inventory dashboard: every vehicle as a card, with purchasing.
+ * The inventory dashboard: search and filters, then every matching vehicle as
+ * a card, with purchasing.
  *
  * Loading, empty and error states are all explicit, and the outcome of each
  * purchase is announced (`role="status"` for success, an alert for errors).
@@ -7,11 +8,12 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { ApiError, messageFor } from '../api/client'
-import type { Vehicle } from '../api/types'
-import { listVehicles, purchaseVehicle } from '../api/vehicles'
+import type { Vehicle, VehicleSearch } from '../api/types'
+import { hasFilters, listVehicles, purchaseVehicle, searchVehicles } from '../api/vehicles'
 import { useAuth } from '../auth/useAuth'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
+import { SearchPanel } from '../components/SearchPanel'
 import { VehicleCard } from '../components/VehicleCard'
 
 type LoadState =
@@ -25,29 +27,38 @@ export function DashboardPage() {
   const [purchasingId, setPurchasingId] = useState<number | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  /** The filters behind the current list; empty means "whole inventory". */
+  const [filters, setFilters] = useState<VehicleSearch>({})
 
-  /** Fetch the inventory and describe the outcome as a load state. */
-  const fetchInventory = useCallback(async (): Promise<LoadState> => {
-    try {
-      return { status: 'loaded', vehicles: await listVehicles(request) }
-    } catch (error) {
-      return { status: 'error', message: messageFor(error) }
-    }
-  }, [request])
+  /** Fetch the vehicles matching `filters` and describe the outcome as a load state. */
+  const fetchVehicles = useCallback(
+    async (filters: VehicleSearch): Promise<LoadState> => {
+      try {
+        const vehicles = hasFilters(filters)
+          ? await searchVehicles(request, filters)
+          : await listVehicles(request)
+        return { status: 'loaded', vehicles }
+      } catch (error) {
+        return { status: 'error', message: messageFor(error) }
+      }
+    },
+    [request],
+  )
 
   useEffect(() => {
     let active = true // ignore a response that arrives after unmounting
-    void fetchInventory().then((state) => {
+    void fetchVehicles({}).then((state) => {
       if (active) setLoad(state)
     })
     return () => {
       active = false
     }
-  }, [fetchInventory])
+  }, [fetchVehicles])
 
-  async function retry() {
+  async function showVehicles(newFilters: VehicleSearch) {
+    setFilters(newFilters)
     setLoad({ status: 'loading' })
-    setLoad(await fetchInventory())
+    setLoad(await fetchVehicles(newFilters))
   }
 
   /** Replace one vehicle in the loaded list (e.g. with its new stock). */
@@ -91,6 +102,13 @@ export function DashboardPage() {
         )}
       </div>
 
+      <div className="mt-6">
+        <SearchPanel
+          onSearch={(newFilters) => void showVehicles(newFilters)}
+          onClear={() => void showVehicles({})}
+        />
+      </div>
+
       <div role="status" className="mt-4 empty:hidden">
         {notice && (
           <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
@@ -106,7 +124,7 @@ export function DashboardPage() {
         {load.status === 'error' && (
           <div className="space-y-3">
             <Alert>{load.message}</Alert>
-            <Button variant="secondary" onClick={() => void retry()}>
+            <Button variant="secondary" onClick={() => void showVehicles(filters)}>
               Try again
             </Button>
           </div>
@@ -114,7 +132,9 @@ export function DashboardPage() {
 
         {load.status === 'loaded' && load.vehicles.length === 0 && (
           <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-600">
-            No vehicles in the inventory yet.
+            {hasFilters(filters)
+              ? 'No vehicles match your search.'
+              : 'No vehicles in the inventory yet.'}
           </p>
         )}
 
