@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI
 
+from app.api.errors import register_error_handlers
 from app.api.routes import auth, health
 
 
@@ -15,6 +16,7 @@ def create_app() -> FastAPI:
         title="Car Dealership Inventory API",
         version="0.1.0",
     )
+    register_error_handlers(app)
     app.include_router(health.router, prefix="/api")
     app.include_router(auth.router, prefix="/api")
     return app

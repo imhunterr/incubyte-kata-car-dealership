@@ -1,9 +1,12 @@
-"""Authentication endpoints: registration and login."""
+"""Authentication endpoints: registration and login.
 
-from fastapi import APIRouter, HTTPException, status
+Failures (duplicate e-mail, bad credentials) are raised by the service as
+domain errors and turned into HTTP responses by :mod:`app.api.errors`.
+"""
+
+from fastapi import APIRouter, status
 
 from app.api.deps import AuthServiceDep
-from app.core.errors import EmailAlreadyRegisteredError, InvalidCredentialsError
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserRead
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -16,12 +19,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 )
 def register(body: RegisterRequest, auth: AuthServiceDep) -> UserRead:
     """Create a new user account with the ``user`` role."""
-    try:
-        user = auth.register(email=body.email, password=body.password)
-    except EmailAlreadyRegisteredError as error:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Email is already registered"
-        ) from error
+    user = auth.register(email=body.email, password=body.password)
     return UserRead.model_validate(user)
 
 
@@ -31,14 +29,7 @@ def register(body: RegisterRequest, auth: AuthServiceDep) -> UserRead:
 )
 def login(body: LoginRequest, auth: AuthServiceDep) -> TokenResponse:
     """Exchange an e-mail and password for a bearer access token."""
-    try:
-        result = auth.login(email=body.email, password=body.password)
-    except InvalidCredentialsError as error:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from error
+    result = auth.login(email=body.email, password=body.password)
     return TokenResponse(
         access_token=result.access_token, user=UserRead.model_validate(result.user)
     )
