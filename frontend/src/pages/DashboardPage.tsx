@@ -109,63 +109,67 @@ export function DashboardPage() {
         />
       </div>
 
-      <div className="mt-8 flex flex-wrap items-end justify-between gap-2">
-        <h2 className="text-2xl font-bold tracking-tight">Vehicles</h2>
-        {load.status === 'loaded' && (
-          <p className="text-sm text-slate-600">
-            {load.vehicles.length} {load.vehicles.length === 1 ? 'vehicle' : 'vehicles'}
-          </p>
-        )}
-      </div>
+      <div className="mt-8 grid gap-6 lg:grid-cols-[18rem_1fr]">
+        <aside>
+          <SearchPanel
+            onSearch={(newFilters) => void showVehicles(newFilters)}
+            onClear={() => void showVehicles({})}
+          />
+        </aside>
 
-      <div className="mt-6">
-        <SearchPanel
-          onSearch={(newFilters) => void showVehicles(newFilters)}
-          onClear={() => void showVehicles({})}
-        />
-      </div>
-
-      <div role="status" className="mt-4 empty:hidden">
-        {notice && (
-          <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            {notice}
-          </p>
-        )}
-      </div>
-      {actionError && <Alert className="mt-4">{actionError}</Alert>}
-
-      <div className="mt-6">
-        {load.status === 'loading' && <p className="text-slate-600">Loading vehicles…</p>}
-
-        {load.status === 'error' && (
-          <div className="space-y-3">
-            <Alert>{load.message}</Alert>
-            <Button variant="secondary" onClick={() => void showVehicles(filters)}>
-              Try again
-            </Button>
+        <div>
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <h2 className="text-2xl font-bold tracking-tight">Vehicles</h2>
+            {load.status === 'loaded' && (
+              <p className="text-sm text-slate-600">
+                {load.vehicles.length} {load.vehicles.length === 1 ? 'vehicle' : 'vehicles'}
+              </p>
+            )}
           </div>
-        )}
 
-        {load.status === 'loaded' && load.vehicles.length === 0 && (
-          <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-600">
-            {hasFilters(filters)
-              ? 'No vehicles match your search.'
-              : 'No vehicles in the inventory yet.'}
-          </p>
-        )}
+          <div role="status" className="mt-4 empty:hidden">
+            {notice && (
+              <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                {notice}
+              </p>
+            )}
+          </div>
+          {actionError && <Alert className="mt-4">{actionError}</Alert>}
 
-        {load.status === 'loaded' && load.vehicles.length > 0 && (
-          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {load.vehicles.map((vehicle) => (
-              <VehicleCard
-                key={vehicle.id}
-                vehicle={vehicle}
-                onPurchase={handlePurchase}
-                purchasing={purchasingId === vehicle.id}
-              />
-            ))}
-          </ul>
-        )}
+          <div className="mt-6">
+            {load.status === 'loading' && <p className="text-slate-600">Loading vehicles…</p>}
+
+            {load.status === 'error' && (
+              <div className="space-y-3">
+                <Alert>{load.message}</Alert>
+                <Button variant="secondary" onClick={() => void showVehicles(filters)}>
+                  Try again
+                </Button>
+              </div>
+            )}
+
+            {load.status === 'loaded' && load.vehicles.length === 0 && (
+              <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-600">
+                {hasFilters(filters)
+                  ? 'No vehicles match your search.'
+                  : 'No vehicles in the inventory yet.'}
+              </p>
+            )}
+
+            {load.status === 'loaded' && load.vehicles.length > 0 && (
+              <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {load.vehicles.map((vehicle) => (
+                  <VehicleCard
+                    key={vehicle.id}
+                    vehicle={vehicle}
+                    onPurchase={handlePurchase}
+                    purchasing={purchasingId === vehicle.id}
+                  />
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       </div>
     </section>
   )
