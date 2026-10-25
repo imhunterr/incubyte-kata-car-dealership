@@ -6,7 +6,7 @@ from decimal import Decimal
 from sqlalchemy import ColumnElement, Update, select, update
 from sqlalchemy.orm import InstrumentedAttribute, Session
 
-from app.core.categories import VehicleCategory
+from app.core.categories import FuelType, Transmission, VehicleCategory
 from app.models.vehicle import Vehicle
 
 _LIKE_ESCAPE = "\\"
@@ -26,12 +26,17 @@ class VehicleRepository:
         category: VehicleCategory | None = None,
         min_price: Decimal | None = None,
         max_price: Decimal | None = None,
+        fuel_type: FuelType | None = None,
+        transmission: Transmission | None = None,
+        min_year: int | None = None,
+        max_mileage: int | None = None,
     ) -> Sequence[Vehicle]:
         """Return the vehicles matching every given filter, ordered by id.
 
         ``None`` means "do not filter on this", so ``search()`` with no
         arguments returns the whole inventory. ``make`` and ``model`` match
-        case-insensitively anywhere in the value; price bounds are inclusive.
+        case-insensitively anywhere in the value; price, year and mileage
+        bounds are inclusive.
         """
         conditions: list[ColumnElement[bool]] = []
         if make is not None:
@@ -44,6 +49,14 @@ class VehicleRepository:
             conditions.append(Vehicle.price >= min_price)
         if max_price is not None:
             conditions.append(Vehicle.price <= max_price)
+        if fuel_type is not None:
+            conditions.append(Vehicle.fuel_type == fuel_type)
+        if transmission is not None:
+            conditions.append(Vehicle.transmission == transmission)
+        if min_year is not None:
+            conditions.append(Vehicle.year >= min_year)
+        if max_mileage is not None:
+            conditions.append(Vehicle.mileage_km <= max_mileage)
 
         query = select(Vehicle).where(*conditions).order_by(Vehicle.id)
         return self._session.scalars(query).all()

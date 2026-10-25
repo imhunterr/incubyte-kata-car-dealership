@@ -103,6 +103,9 @@ class VehicleSearch(BaseModel):
     - ``category``: exact match.
     - ``min_price`` / ``max_price``: inclusive bounds; ``min_price`` may not
       exceed ``max_price``.
+    - ``fuel_type`` / ``transmission``: exact match.
+    - ``min_year``: model year at least this; ``max_mileage``: at most this
+      many kilometres.
     """
 
     make: str | None = None
@@ -110,6 +113,10 @@ class VehicleSearch(BaseModel):
     category: VehicleCategory | None = None
     min_price: Decimal | None = Field(default=None, ge=0)
     max_price: Decimal | None = Field(default=None, ge=0)
+    fuel_type: FuelType | None = None
+    transmission: Transmission | None = None
+    min_year: int | None = None
+    max_mileage: int | None = Field(default=None, ge=0)
 
     @field_validator("make", "model")
     @classmethod
