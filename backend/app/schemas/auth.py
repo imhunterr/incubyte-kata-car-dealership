@@ -1,15 +1,24 @@
 """Request and response bodies for the authentication endpoints."""
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.core.roles import Role
 
+PASSWORD_MIN_LENGTH = 8
+# The upper bound stops a single request from forcing an expensive hash of an
+# arbitrarily large input.
+PASSWORD_MAX_LENGTH = 128
+
 
 class RegisterRequest(BaseModel):
-    """Body of ``POST /api/auth/register``."""
+    """Body of ``POST /api/auth/register``.
 
-    email: str
-    password: str
+    There is intentionally no ``role`` field: any role sent by a client is
+    ignored, so nobody can register themselves as an admin.
+    """
+
+    email: EmailStr
+    password: str = Field(min_length=PASSWORD_MIN_LENGTH, max_length=PASSWORD_MAX_LENGTH)
 
 
 class UserRead(BaseModel):
