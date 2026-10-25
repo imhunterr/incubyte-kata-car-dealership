@@ -244,14 +244,17 @@ Restock (admin)
 
 ### Slice 5 — Frontend
 
-- [ ] Login form: submits credentials, stores the session, redirects to the dashboard.
-- [ ] Login form: shows the API error on 401.
-- [ ] Register form: validates e-mail and password length before submitting.
-- [ ] Protected route redirects anonymous users to login.
+- [x] Login form: submits credentials, stores the session, redirects to the dashboard.
+- [x] Login form: shows the API error on 401.
+- [x] Register form: validates e-mail and password length before submitting.
+- [x] Protected route redirects anonymous users to login.
 - [ ] Dashboard lists vehicles from the API.
 - [ ] Purchase button disabled when quantity is 0; enabled otherwise.
 - [ ] Clicking Purchase calls the API and updates the shown stock.
 - [ ] Search form sends the right query params.
 - [ ] Admin controls hidden for regular users, shown for admins.
 - [ ] Admin can add, edit, delete and restock vehicles through forms.
-- [ ] A 401 from any API call logs the user out.
+- [x] A 401 from any API call logs the user out.
+- [x] Register form: confirmation must match; the new user is logged in straight away.
+- [x] Logged-in users are kept off the login/register pages; the header shows
+      the user, an Admin badge and Log out.
