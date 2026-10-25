@@ -5,107 +5,46 @@
  * Loading, empty and error states are all explicit, and the outcome of each
  * purchase is announced (`role="status"` for success, an alert for errors).
  */
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { ApiError, messageFor } from '../api/client'
-import type { Vehicle, VehicleSearch } from '../api/types'
-import { hasFilters, listVehicles, purchaseVehicle, searchVehicles } from '../api/vehicles'
+import type { Vehicle } from '../api/types'
+import { hasFilters, purchaseVehicle } from '../api/vehicles'
 import { useAuth } from '../auth/useAuth'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { ActiveFilters } from '../components/ActiveFilters'
-import { QuickFilters } from '../components/QuickFilters'
+import { DashboardHero } from '../components/DashboardHero'
 import { SearchPanel } from '../components/SearchPanel'
 import { VehicleCard } from '../components/VehicleCard'
 import { SelectField } from '../components/SelectField'
+import { useInventory } from '../hooks/useInventory'
 import { useShortlist } from '../hooks/useShortlist'
-import { compactFilters } from '../lib/filters'
 import { SORT_OPTIONS, sortVehicles, type SortOrder } from '../lib/sorting'
-
-type LoadState =
-  | { status: 'loading' }
-  | { status: 'error'; message: string }
-  | { status: 'loaded'; vehicles: Vehicle[] }
 
 export function DashboardPage() {
   const { request, user } = useAuth()
   // The dashboard is only rendered for logged-in users.
   const shortlist = useShortlist(user!.id)
   const [showShortlistOnly, setShowShortlistOnly] = useState(false)
-  const [load, setLoad] = useState<LoadState>({ status: 'loading' })
+  const { load, filters, brands, applyFilters, replaceVehicle } = useInventory()
   const [purchasingId, setPurchasingId] = useState<number | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
-  /** The filters behind the current list; empty means "whole inventory". */
-  const [filters, setFilters] = useState<VehicleSearch>({})
   const [sortOrder, setSortOrder] = useState<SortOrder>('recommended')
-  /** Makes in the whole inventory, for the brand shortcuts. */
-  const [brands, setBrands] = useState<string[]>([])
-
-  /** Fetch the vehicles matching `filters` and describe the outcome as a load state. */
-  const fetchVehicles = useCallback(
-    async (filters: VehicleSearch): Promise<LoadState> => {
-      try {
-        const vehicles = hasFilters(filters)
-          ? await searchVehicles(request, filters)
-          : await listVehicles(request)
-        return { status: 'loaded', vehicles }
-      } catch (error) {
-        return { status: 'error', message: messageFor(error) }
-      }
-    },
-    [request],
-  )
-
-  /** Show a load result; an unfiltered list also refreshes the brand shortcuts. */
-  const applyLoad = useCallback((state: LoadState, appliedFilters: VehicleSearch) => {
-    setLoad(state)
-    if (state.status === 'loaded' && !hasFilters(appliedFilters)) {
-      setBrands([...new Set(state.vehicles.map((vehicle) => vehicle.make))].sort())
-    }
-  }, [])
-
-  useEffect(() => {
-    let active = true // ignore a response that arrives after unmounting
-    void fetchVehicles({}).then((state) => {
-      if (active) applyLoad(state, {})
-    })
-    return () => {
-      active = false
-    }
-  }, [fetchVehicles, applyLoad])
-
-  async function showVehicles(newFilters: VehicleSearch) {
-    const applied = compactFilters(newFilters)
-    setFilters(applied)
-    setLoad({ status: 'loading' })
-    applyLoad(await fetchVehicles(applied), applied)
-  }
-
-  /** Replace one vehicle in the loaded list (e.g. with its new stock). */
-  function updateVehicle(updated: Vehicle) {
-    setLoad((current) =>
-      current.status === 'loaded'
-        ? {
-            ...current,
-            vehicles: current.vehicles.map((v) => (v.id === updated.id ? updated : v)),
-          }
-        : current,
-    )
-  }
 
   async function handlePurchase(vehicle: Vehicle) {
     setPurchasingId(vehicle.id)
     setNotice(null)
     setActionError(null)
     try {
-      updateVehicle(await purchaseVehicle(request, vehicle.id))
+      replaceVehicle(await purchaseVehicle(request, vehicle.id))
       setNotice(`You bought a ${vehicle.make} ${vehicle.model}.`)
     } catch (error) {
       setActionError(messageFor(error))
       // 409: someone else bought the last unit first, so it is sold out now.
       if (error instanceof ApiError && error.status === 409) {
-        updateVehicle({ ...vehicle, quantity: 0 })
+        replaceVehicle({ ...vehicle, quantity: 0 })
       }
     } finally {
       setPurchasingId(null)
@@ -132,34 +71,19 @@ export function DashboardPage() {
 
   return (
     <section>
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy-900 via-navy-800 to-navy-700 px-6 py-10 text-white shadow-lg sm:px-10">
-        <p className="text-sm font-semibold tracking-wider text-amber-300 uppercase">
-          Quality cars, transparent prices
-        </p>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
-          Find your next car
-        </h1>
-        <p className="mt-2 max-w-xl text-navy-200">
-          Search by make, model, body type or budget, then buy in one click.
-        </p>
-        <QuickFilters
-          filters={filters}
-          brands={brands}
-          onChange={(newFilters) => void showVehicles(newFilters)}
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-16 -right-16 h-64 w-64 rounded-full bg-amber-400/10"
-        />
-      </div>
+      <DashboardHero
+        filters={filters}
+        brands={brands}
+        onFiltersChange={(newFilters) => void applyFilters(newFilters)}
+      />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[18rem_1fr]">
         <aside>
           <SearchPanel
             key={JSON.stringify(filters)}
             initialFilters={filters}
-            onSearch={(newFilters) => void showVehicles(newFilters)}
-            onClear={() => void showVehicles({})}
+            onSearch={(newFilters) => void applyFilters(newFilters)}
+            onClear={() => void applyFilters({})}
           />
         </aside>
 
@@ -199,7 +123,7 @@ export function DashboardPage() {
 
           <ActiveFilters
             filters={filters}
-            onChange={(newFilters) => void showVehicles(newFilters)}
+            onChange={(newFilters) => void applyFilters(newFilters)}
           />
 
           <div role="status" className="mt-4 empty:hidden">
@@ -217,7 +141,7 @@ export function DashboardPage() {
             {load.status === 'error' && (
               <div className="space-y-3">
                 <Alert>{load.message}</Alert>
-                <Button variant="secondary" onClick={() => void showVehicles(filters)}>
+                <Button variant="secondary" onClick={() => void applyFilters(filters)}>
                   Try again
                 </Button>
               </div>
