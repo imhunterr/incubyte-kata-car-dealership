@@ -79,6 +79,9 @@ The backend reads its settings from environment variables or `backend/.env`
 - **Invariants are enforced twice.** The API validates input, and the
   database has CHECK constraints (`quantity >= 0`, `price > 0`) so no code
   path can store impossible stock or prices.
+- **Search input is never treated as a pattern.** `make`/`model` filters use
+  `ILIKE` with `%`, `_` and `\` escaped, so a search for `%` finds nothing
+  instead of everything.
 - **E-mails are case-insensitive** (normalised to lower case), and the
   database's unique constraint is the single, race-safe guard against
   duplicates.

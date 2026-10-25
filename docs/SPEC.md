@@ -80,7 +80,8 @@ All responses are JSON. Errors use FastAPI's shape: `{"detail": ...}`.
 - **List** — returns every vehicle, including ones with `quantity = 0` (the UI
   shows them with a disabled Purchase button). Ordered by `id`.
 - **Search** — query params, all optional and combinable (AND):
-  - `make`, `model`: case-insensitive _partial_ match.
+  - `make`, `model`: case-insensitive _partial_ match (trimmed; blank = no
+    filter; `%` and `_` are matched literally).
   - `category`: exact match on the enum.
   - `min_price`, `max_price`: inclusive bounds, each `>= 0`.
   - `min_price > max_price` → 422.
@@ -196,15 +197,17 @@ Delete (admin)
 
 ### Slice 3 — Search
 
-- [ ] No params → every vehicle.
-- [ ] `make` partial, case-insensitive match.
-- [ ] `model` partial, case-insensitive match.
-- [ ] `category` exact match; unknown category → 422.
-- [ ] `min_price` only; `max_price` only; both (inclusive bounds).
-- [ ] `min_price > max_price` → 422; negative price → 422.
-- [ ] Combined filters are ANDed.
-- [ ] No matches → 200 `[]`.
-- [ ] Anonymous → 401.
+- [x] No params → every vehicle.
+- [x] `make` partial, case-insensitive match.
+- [x] `model` partial, case-insensitive match.
+- [x] Text filters are trimmed; blank text filters are ignored.
+- [x] `%`, `_` and `\` in text filters match literally (not as SQL wildcards).
+- [x] `category` exact match; unknown category → 422.
+- [x] `min_price` only; `max_price` only; both (inclusive bounds).
+- [x] `min_price > max_price` → 422; negative price → 422.
+- [x] Combined filters are ANDed.
+- [x] No matches → 200 `[]`.
+- [x] Anonymous → 401.
 
 ### Slice 4 — Inventory
 
