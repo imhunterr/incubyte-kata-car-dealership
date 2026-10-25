@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.cli import main
-from app.core.categories import VehicleCategory
+from app.core.categories import FuelType, Transmission, VehicleCategory
 from app.core.roles import Role
 from app.core.security import verify_password
 from app.models.user import User
@@ -181,6 +181,16 @@ def test_seed_demo_covers_every_category_and_includes_a_sold_out_vehicle(
     vehicles = db_session.scalars(select(Vehicle)).all()
     assert {vehicle.category for vehicle in vehicles} == set(VehicleCategory)
     assert any(vehicle.quantity == 0 for vehicle in vehicles)
+
+
+def test_seed_demo_covers_every_fuel_type_and_transmission(
+    session_factory: sessionmaker[Session], db_session: Session
+) -> None:
+    main(["seed-demo"], session_factory=session_factory, read_password=_no_prompt)
+
+    vehicles = db_session.scalars(select(Vehicle)).all()
+    assert {vehicle.fuel_type for vehicle in vehicles} == set(FuelType)
+    assert {vehicle.transmission for vehicle in vehicles} == set(Transmission)
 
 
 def test_seed_demo_never_touches_a_non_empty_inventory(

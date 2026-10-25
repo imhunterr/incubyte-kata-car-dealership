@@ -8,7 +8,7 @@ from collections.abc import Callable
 import pytest
 from fastapi.testclient import TestClient
 
-from app.core.categories import VehicleCategory
+from app.core.categories import FuelType, Transmission, VehicleCategory
 from app.models.vehicle import Vehicle
 from tests.helpers import VEHICLES_URL
 
@@ -20,15 +20,55 @@ def inventory(create_vehicle: Callable[..., Vehicle]) -> dict[str, int]:
     """A small, varied inventory. Returns each vehicle's id by model name."""
     vehicles = [
         create_vehicle(
-            make="Toyota", model="Corolla", category=VehicleCategory.SEDAN, price="21999.99"
+            make="Toyota",
+            model="Corolla",
+            category=VehicleCategory.SEDAN,
+            price="21999.99",
+            year=2022,
+            fuel_type=FuelType.HYBRID,
+            transmission=Transmission.AUTOMATIC,
+            mileage_km=18500,
         ),
-        create_vehicle(make="Toyota", model="RAV4", category=VehicleCategory.SUV, price="32000"),
         create_vehicle(
-            make="Honda", model="Civic", category=VehicleCategory.HATCHBACK, price="24000"
+            make="Toyota",
+            model="RAV4",
+            category=VehicleCategory.SUV,
+            price="32000",
+            year=2021,
+            fuel_type=FuelType.PETROL,
+            transmission=Transmission.AUTOMATIC,
+            mileage_km=30000,
         ),
-        create_vehicle(make="Ford", model="F-150", category=VehicleCategory.TRUCK, price="45000"),
         create_vehicle(
-            make="Ford", model="Mustang", category=VehicleCategory.COUPE, price="38000", quantity=0
+            make="Honda",
+            model="Civic",
+            category=VehicleCategory.HATCHBACK,
+            price="24000",
+            year=2019,
+            fuel_type=FuelType.PETROL,
+            transmission=Transmission.MANUAL,
+            mileage_km=52000,
+        ),
+        create_vehicle(
+            make="Ford",
+            model="F-150",
+            category=VehicleCategory.TRUCK,
+            price="45000",
+            year=2020,
+            fuel_type=FuelType.DIESEL,
+            transmission=Transmission.AUTOMATIC,
+            mileage_km=45000,
+        ),
+        create_vehicle(
+            make="Ford",
+            model="Mustang",
+            category=VehicleCategory.COUPE,
+            price="38000",
+            quantity=0,
+            year=2023,
+            fuel_type=FuelType.PETROL,
+            transmission=Transmission.MANUAL,
+            mileage_km=6000,
         ),
     ]
     return {vehicle.model: vehicle.id for vehicle in vehicles}
@@ -147,6 +187,68 @@ def test_invalid_price_bound_returns_422(
     response = client.get(SEARCH_URL, params={param: value}, headers=user_headers)
 
     assert response.status_code == 422
+
+
+# --- Vehicle details ----------------------------------------------------------
+
+
+def test_fuel_type_matches_exactly(client: TestClient, user_headers: dict[str, str]) -> None:
+    assert _models(_search(client, user_headers, fuel_type="petrol")) == [
+        "RAV4",
+        "Civic",
+        "Mustang",
+    ]
+
+
+def test_transmission_matches_exactly(client: TestClient, user_headers: dict[str, str]) -> None:
+    assert _models(_search(client, user_headers, transmission="manual")) == ["Civic", "Mustang"]
+
+
+def test_min_year_is_inclusive(client: TestClient, user_headers: dict[str, str]) -> None:
+    assert _models(_search(client, user_headers, min_year=2022)) == ["Corolla", "Mustang"]
+
+
+def test_max_mileage_is_inclusive(client: TestClient, user_headers: dict[str, str]) -> None:
+    assert _models(_search(client, user_headers, max_mileage=30000)) == [
+        "Corolla",
+        "RAV4",
+        "Mustang",
+    ]
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"fuel_type": "coal"},
+        {"transmission": "cvt"},
+        {"min_year": "old"},
+        {"max_mileage": "-1"},
+        {"max_mileage": "far"},
+    ],
+    ids=["unknown-fuel", "unknown-transmission", "text-year", "negative-mileage", "text-mileage"],
+)
+def test_invalid_detail_filters_return_422(
+    client: TestClient, user_headers: dict[str, str], params: dict[str, str]
+) -> None:
+    response = client.get(SEARCH_URL, params=params, headers=user_headers)
+
+    assert response.status_code == 422
+
+
+def test_detail_filters_combine_with_the_others(
+    client: TestClient, user_headers: dict[str, str]
+) -> None:
+    results = _search(
+        client,
+        user_headers,
+        make="toyota",
+        fuel_type="petrol",
+        transmission="automatic",
+        min_year=2020,
+        max_mileage=40000,
+    )
+
+    assert _models(results) == ["RAV4"]
 
 
 # --- Combined filters and edge cases ------------------------------------------
