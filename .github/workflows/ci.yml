@@ -88,3 +88,18 @@ jobs:
           path: |
             frontend/test-results.xml
             frontend/coverage/
+
+  e2e:
+    name: End-to-end (docker compose)
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build, start and smoke-test the whole stack
+        run: make stack-smoke
+      - name: Show container logs
+        if: failure()
+        run: docker compose logs
+      - name: Stop the stack
+        if: always()
+        run: docker compose down --volumes
