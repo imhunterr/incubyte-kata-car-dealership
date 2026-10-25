@@ -6,7 +6,7 @@
 .DEFAULT_GOAL := help
 .PHONY: help install db-up db-down migrate migrations-check seed dev-api dev-web \
         test test-backend test-frontend coverage lint format \
-        stack-up stack-down stack-smoke
+        stack-up stack-down stack-smoke test-report
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | \
@@ -54,6 +54,9 @@ test-frontend: ## Run the frontend tests
 coverage: db-up ## Run all tests with coverage reports
 	cd backend && uv run pytest --cov --cov-report=term-missing --cov-report=html
 	cd frontend && npm run test:coverage
+
+test-report: db-up ## Regenerate docs/TEST_REPORT.md from real test runs
+	scripts/test-report.sh
 
 lint: ## Lint, format-check and type-check both apps
 	cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy
