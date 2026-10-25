@@ -82,3 +82,12 @@ vercel
 Frontend calls: use relative URLs like fetch("/api/cars") instead of localhost:8000.
 Env vars: add things like DATABASE_URL or SECRET_KEY under Environment Variables on this screen.
 </pasted_content id="8a50">
+
+---
+
+## Prompt 9 — 2026-10-25 22:53:39 IST
+
+1) I will do the reflection part
+2) I have added Database URL and JWT and have redeployed it 
+3) Leave that out
+4) Will do that myself
