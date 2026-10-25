@@ -1,8 +1,8 @@
 /** Admin form for adding units to a vehicle's stock (1 to 10,000 at a time, like the API). */
 import { useState, type FormEvent } from 'react'
 
-import { messageFor } from '../api/client'
 import type { Vehicle } from '../api/types'
+import { useAsyncAction } from '../hooks/useAsyncAction'
 import { Alert } from './Alert'
 import { Button } from './Button'
 import { TextField } from './TextField'
@@ -28,8 +28,7 @@ function unitsError(value: string): string | undefined {
 export function RestockForm({ vehicle, onSubmit, onCancel }: RestockFormProps) {
   const [units, setUnits] = useState('')
   const [fieldError, setFieldError] = useState<string | undefined>()
-  const [formError, setFormError] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
+  const { busy: saving, error: formError, run } = useAsyncAction()
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -37,14 +36,7 @@ export function RestockForm({ vehicle, onSubmit, onCancel }: RestockFormProps) {
     setFieldError(error)
     if (error) return
 
-    setFormError(null)
-    setSaving(true)
-    try {
-      await onSubmit(Number(units))
-    } catch (caught) {
-      setFormError(messageFor(caught))
-      setSaving(false)
-    }
+    await run(() => onSubmit(Number(units)))
   }
 
   return (

@@ -6,12 +6,12 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 
-import { messageFor } from '../api/client'
 import { useAuth } from '../auth/useAuth'
 import { Alert } from '../components/Alert'
 import { AuthCard } from '../components/AuthCard'
 import { Button } from '../components/Button'
 import { TextField } from '../components/TextField'
+import { useAsyncAction } from '../hooks/useAsyncAction'
 
 const PASSWORD_MIN_LENGTH = 8
 const PASSWORD_MAX_LENGTH = 128
@@ -43,8 +43,7 @@ export function RegisterPage() {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
-  const [formError, setFormError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
+  const { busy: submitting, error: formError, run } = useAsyncAction()
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -52,15 +51,8 @@ export function RegisterPage() {
     setFieldErrors(errors)
     if (Object.values(errors).some(Boolean)) return
 
-    setFormError(null)
-    setSubmitting(true)
-    try {
-      // Success logs the user in; the route guard then opens the dashboard.
-      await register(email.trim(), password)
-    } catch (error) {
-      setFormError(messageFor(error))
-      setSubmitting(false)
-    }
+    // Success logs the user in; the route guard then opens the dashboard.
+    await run(() => register(email.trim(), password))
   }
 
   return (

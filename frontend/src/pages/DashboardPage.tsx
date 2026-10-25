@@ -78,36 +78,37 @@ export function DashboardPage() {
     }
   }
 
+  /** Close the admin dialog and announce what the action did. */
+  function finishAdminAction(message: string) {
+    setDialog(null)
+    setActionError(null)
+    setNotice(message)
+  }
+
   async function handleCreate(input: VehicleInput) {
     const created = await createVehicle(request, input)
     addVehicle(created)
-    setDialog(null)
-    setActionError(null)
-    setNotice(`Added ${created.make} ${created.model}.`)
+    finishAdminAction(`Added ${created.make} ${created.model}.`)
   }
 
   async function handleUpdate(vehicle: Vehicle, input: VehicleInput) {
     const saved = await updateVehicle(request, vehicle.id, input)
     replaceVehicle(saved)
-    setDialog(null)
-    setActionError(null)
-    setNotice(`Saved ${saved.make} ${saved.model}.`)
+    finishAdminAction(`Saved ${saved.make} ${saved.model}.`)
   }
 
   async function handleDelete(vehicle: Vehicle) {
     await deleteVehicle(request, vehicle.id)
     removeVehicle(vehicle.id)
-    setDialog(null)
-    setActionError(null)
-    setNotice(`Deleted ${vehicle.make} ${vehicle.model}.`)
+    finishAdminAction(`Deleted ${vehicle.make} ${vehicle.model}.`)
   }
 
   async function handleRestock(vehicle: Vehicle, units: number) {
     const restocked = await restockVehicle(request, vehicle.id, units)
     replaceVehicle(restocked)
-    setDialog(null)
-    setActionError(null)
-    setNotice(`${restocked.make} ${restocked.model} now has ${restocked.quantity} in stock.`)
+    finishAdminAction(
+      `${restocked.make} ${restocked.model} now has ${restocked.quantity} in stock.`,
+    )
   }
 
   const adminActions: AdminActions = {

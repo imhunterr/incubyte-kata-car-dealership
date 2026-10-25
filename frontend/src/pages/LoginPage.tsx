@@ -2,12 +2,12 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 
-import { messageFor } from '../api/client'
 import { useAuth } from '../auth/useAuth'
 import { Alert } from '../components/Alert'
 import { AuthCard } from '../components/AuthCard'
 import { Button } from '../components/Button'
 import { TextField } from '../components/TextField'
+import { useAsyncAction } from '../hooks/useAsyncAction'
 
 interface FieldErrors {
   email?: string
@@ -19,8 +19,7 @@ export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
-  const [formError, setFormError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
+  const { busy: submitting, error: formError, run } = useAsyncAction()
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -31,16 +30,9 @@ export function LoginPage() {
     setFieldErrors(errors)
     if (errors.email || errors.password) return
 
-    setFormError(null)
-    setSubmitting(true)
-    try {
-      // On success the auth state changes and the route guard redirects to
-      // the dashboard, so there is nothing else to do here.
-      await login(email.trim(), password)
-    } catch (error) {
-      setFormError(messageFor(error))
-      setSubmitting(false)
-    }
+    // On success the auth state changes and the route guard redirects to
+    // the dashboard, so there is nothing else to do here.
+    await run(() => login(email.trim(), password))
   }
 
   return (

@@ -3,9 +3,9 @@
  * first, so it receives the dialog's initial focus and a stray Enter cannot
  * trigger the action.
  */
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
-import { messageFor } from '../api/client'
+import { useAsyncAction } from '../hooks/useAsyncAction'
 import { Alert } from './Alert'
 import { Button } from './Button'
 
@@ -25,19 +25,7 @@ export function ConfirmAction({
   onConfirm,
   onCancel,
 }: ConfirmActionProps) {
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  async function confirm() {
-    setError(null)
-    setBusy(true)
-    try {
-      await onConfirm()
-    } catch (caught) {
-      setError(messageFor(caught))
-      setBusy(false)
-    }
-  }
+  const { busy, error, run } = useAsyncAction()
 
   return (
     <div className="space-y-4">
@@ -47,7 +35,7 @@ export function ConfirmAction({
         <Button variant="secondary" onClick={onCancel}>
           Cancel
         </Button>
-        <Button variant="danger" disabled={busy} onClick={() => void confirm()}>
+        <Button variant="danger" disabled={busy} onClick={() => void run(onConfirm)}>
           {busy ? busyLabel : confirmLabel}
         </Button>
       </div>

@@ -1,8 +1,8 @@
 /** The admin form for adding or editing a vehicle. */
 import { useState, type FormEvent } from 'react'
 
-import { messageFor } from '../api/client'
 import { FUEL_TYPES, TRANSMISSIONS, VEHICLE_CATEGORIES, type VehicleInput } from '../api/types'
+import { useAsyncAction } from '../hooks/useAsyncAction'
 import { formatCategory, formatFuel, formatTransmission } from '../lib/format'
 import {
   toVehicleInput,
@@ -25,8 +25,7 @@ interface VehicleFormProps {
 export function VehicleForm({ initialValues, onSubmit, onCancel }: VehicleFormProps) {
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState<VehicleFormErrors>({})
-  const [formError, setFormError] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
+  const { busy: saving, error: formError, run } = useAsyncAction()
 
   function update<K extends keyof VehicleFormValues>(field: K, value: VehicleFormValues[K]) {
     setValues((current) => ({ ...current, [field]: value }))
@@ -38,14 +37,7 @@ export function VehicleForm({ initialValues, onSubmit, onCancel }: VehicleFormPr
     setErrors(fieldErrors)
     if (Object.keys(fieldErrors).length > 0) return
 
-    setFormError(null)
-    setSaving(true)
-    try {
-      await onSubmit(toVehicleInput(values))
-    } catch (error) {
-      setFormError(messageFor(error))
-      setSaving(false)
-    }
+    await run(() => onSubmit(toVehicleInput(values)))
   }
 
   return (
