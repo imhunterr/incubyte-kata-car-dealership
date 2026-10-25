@@ -18,10 +18,6 @@ class VehicleRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
 
-    def list_all(self) -> Sequence[Vehicle]:
-        """Return every vehicle, oldest first (ordered by id)."""
-        return self._session.scalars(select(Vehicle).order_by(Vehicle.id)).all()
-
     def search(
         self,
         *,
@@ -33,7 +29,8 @@ class VehicleRepository:
     ) -> Sequence[Vehicle]:
         """Return the vehicles matching every given filter, ordered by id.
 
-        ``None`` means "do not filter on this". ``make`` and ``model`` match
+        ``None`` means "do not filter on this", so ``search()`` with no
+        arguments returns the whole inventory. ``make`` and ``model`` match
         case-insensitively anywhere in the value; price bounds are inclusive.
         """
         conditions: list[ColumnElement[bool]] = []

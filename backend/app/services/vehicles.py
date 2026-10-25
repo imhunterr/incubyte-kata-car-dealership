@@ -16,7 +16,7 @@ class VehicleService:
 
     def list_all(self) -> Sequence[Vehicle]:
         """Return the whole inventory, including vehicles that are out of stock."""
-        return self._vehicles.list_all()
+        return self._vehicles.search()
 
     def search(self, criteria: VehicleSearch) -> Sequence[Vehicle]:
         """Return the vehicles matching every supplied filter (see :class:`VehicleSearch`)."""

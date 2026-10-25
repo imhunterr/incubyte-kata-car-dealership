@@ -13,8 +13,11 @@ from app.schemas.vehicles import VehicleRead, VehicleSearch, VehicleWrite
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
-_AUTH_ERRORS: dict[int | str, dict[str, Any]] = {
+# Documented error responses, shown in the OpenAPI docs.
+_UNAUTHENTICATED: dict[int | str, dict[str, Any]] = {
     status.HTTP_401_UNAUTHORIZED: {"description": "Missing or invalid access token"},
+}
+_AUTH_ERRORS: dict[int | str, dict[str, Any]] = _UNAUTHENTICATED | {
     status.HTTP_403_FORBIDDEN: {"description": "Admin privileges required"},
 }
 _NOT_FOUND: dict[int | str, dict[str, Any]] = {
@@ -24,7 +27,7 @@ _NOT_FOUND: dict[int | str, dict[str, Any]] = {
 
 @router.get(
     "",
-    responses={status.HTTP_401_UNAUTHORIZED: _AUTH_ERRORS[status.HTTP_401_UNAUTHORIZED]},
+    responses=_UNAUTHENTICATED,
 )
 def list_vehicles(vehicles: VehicleServiceDep, _user: CurrentUserDep) -> list[VehicleRead]:
     """List every vehicle, including ones that are out of stock, ordered by id."""
@@ -33,7 +36,7 @@ def list_vehicles(vehicles: VehicleServiceDep, _user: CurrentUserDep) -> list[Ve
 
 @router.get(
     "/search",
-    responses={status.HTTP_401_UNAUTHORIZED: _AUTH_ERRORS[status.HTTP_401_UNAUTHORIZED]},
+    responses=_UNAUTHENTICATED,
 )
 def search_vehicles(
     criteria: Annotated[VehicleSearch, Query()],
