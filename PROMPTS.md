@@ -91,3 +91,12 @@ Env vars: add things like DATABASE_URL or SECRET_KEY under Environment Variables
 2) I have added Database URL and JWT and have redeployed it 
 3) Leave that out
 4) Will do that myself
+
+---
+
+## Prompt 10 — 2026-10-25 23:00:16 IST
+
+It has ran succesfully add the below details in readme so that they can test 
+
+Email : admin_incubyte@gmail.com
+Password : incubyte0506
