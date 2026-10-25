@@ -51,3 +51,9 @@ The phases look good. Yes you can get started.
 If needed, you can note down the need to update the readme in a md file in docs/. You can use it as a running log of what needs to be updated in the end if there is any slippage. Make sure to keep it out of git. Add it to gitignore. And best case scenario is to not have any pending work. 
 
 Go on with phase 2.
+
+---
+
+## Prompt 6 — 2026-10-25 21:17:22 IST
+
+Yes continue with Phase 3 and in fact you can continue between phases without asking me unless there is something that needs me to input my decision. While moving across phases, you do need to notify that you are doing so. You can go on.
