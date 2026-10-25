@@ -92,8 +92,9 @@ All responses are JSON. Errors use FastAPI's shape: `{"detail": ...}`.
   `UPDATE … SET quantity = quantity - 1 WHERE id = :id AND quantity > 0`, so
   concurrent purchases can never oversell or drive stock negative. If no row
   is updated: 404 if the vehicle does not exist, otherwise 409.
-- **Restock** — body `{quantity}` with `quantity >= 1`; increases stock by
-  that amount, atomically.
+- **Restock** — body `{quantity}` with `1 <= quantity <= 10,000` (a strict
+  integer); increases stock by that amount with one atomic
+  `UPDATE … SET quantity = quantity + :n`.
 
 ---
 
@@ -213,20 +214,22 @@ Delete (admin)
 
 Purchase (any user)
 
-- [ ] In stock → 200; quantity decreases by 1; change is persisted.
-- [ ] Last unit → quantity becomes 0.
-- [ ] Out of stock → 409; quantity stays 0.
-- [ ] Unknown id → 404.
-- [ ] Anonymous → 401.
-- [ ] **Concurrency:** N parallel purchases with stock 1 → exactly one 200,
+- [x] In stock → 200; quantity decreases by 1; change is persisted.
+- [x] Last unit → quantity becomes 0.
+- [x] Out of stock → 409; quantity stays 0.
+- [x] Unknown id → 404.
+- [x] Anonymous → 401.
+- [x] **Concurrency:** N parallel purchases with stock 1 → exactly one 200,
       N−1 409s, final quantity 0.
 
 Restock (admin)
 
-- [ ] Valid quantity → 200; stock increases by that amount.
-- [ ] `quantity <= 0` or missing → 422.
-- [ ] Unknown id → 404.
-- [ ] Non-admin → 403; anonymous → 401.
+- [x] Valid quantity → 200; stock increases by that amount.
+- [x] `quantity <= 0`, over 10,000, non-integer or missing → 422; stock unchanged.
+- [x] Restocking a sold-out vehicle makes it purchasable again.
+- [x] **Concurrency:** simultaneous restocks are all counted (no lost updates).
+- [x] Unknown id → 404.
+- [x] Non-admin → 403; anonymous → 401.
 
 ### Slice 5 — Frontend
 

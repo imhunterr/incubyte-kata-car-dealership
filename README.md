@@ -73,6 +73,13 @@ The backend reads its settings from environment variables or `backend/.env`
 - **Login failures are indistinguishable.** An unknown e-mail and a wrong
   password return the same 401, and take comparable time, so the endpoint
   cannot be used to discover registered e-mails.
+- **Stock changes are atomic.** A purchase is one conditional
+  `UPDATE … SET quantity = quantity - 1 WHERE id = :id AND quantity > 0`, and a
+  restock is one `SET quantity = quantity + :n`. A test fires 10 simultaneous
+  purchases at a vehicle with fewer units and checks that exactly as many
+  succeed as there were units, with the rest getting 409. The first,
+  read-then-write version failed that test (10 sales from 3 units), which is
+  why the atomic version exists.
 - **Money is exact.** Prices are `Decimal` values in a `NUMERIC(10, 2)` column
   and are sent over JSON as strings (`"21999.99"`), so no floating-point
   rounding ever touches them.
