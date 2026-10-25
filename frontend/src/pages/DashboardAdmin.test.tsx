@@ -307,3 +307,65 @@ describe('DashboardPage: editing a vehicle', () => {
     expect(await within(dialog).findByRole('alert')).toHaveTextContent('Vehicle not found')
   })
 })
+
+describe('DashboardPage: deleting a vehicle', () => {
+  async function openDeleteDialog(user: UserEvent, name = 'Toyota Corolla') {
+    await user.click(within(card(name)).getByRole('button', { name: `Delete ${name}` }))
+    return screen.getByRole('dialog', { name: `Delete ${name}?` })
+  }
+
+  it('asks for confirmation, with Cancel focused', async () => {
+    const { user } = await renderLoadedDashboard()
+
+    const dialog = await openDeleteDialog(user)
+
+    expect(
+      within(dialog).getByText(/removes it from the inventory permanently/),
+    ).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Cancel' })).toHaveFocus()
+  })
+
+  it('deletes the vehicle and removes its card', async () => {
+    let deletedId: string | undefined
+    server.use(
+      http.delete('*/api/vehicles/:id', ({ params }) => {
+        deletedId = String(params.id)
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openDeleteDialog(user)
+
+    await user.click(within(dialog).getByRole('button', { name: 'Delete vehicle' }))
+
+    expect(await screen.findByText('2 vehicles')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Toyota Corolla' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Deleted Toyota Corolla.')
+    expect(deletedId).toBe(String(corolla.id))
+  })
+
+  it('keeps the vehicle when cancelled', async () => {
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openDeleteDialog(user)
+
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Toyota Corolla' })).toBeInTheDocument()
+  })
+
+  it('shows API errors in the dialog', async () => {
+    server.use(
+      http.delete('*/api/vehicles/:id', () =>
+        HttpResponse.json({ detail: 'Vehicle not found' }, { status: 404 }),
+      ),
+    )
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openDeleteDialog(user)
+
+    await user.click(within(dialog).getByRole('button', { name: 'Delete vehicle' }))
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Vehicle not found')
+  })
+})
