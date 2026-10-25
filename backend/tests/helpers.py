@@ -15,6 +15,7 @@ def auth_headers(user: User) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def vehicle_url(vehicle_id: int | str) -> str:
-    """URL of a single vehicle."""
-    return f"{VEHICLES_URL}/{vehicle_id}"
+def vehicle_url(vehicle_id: int | str, action: str = "") -> str:
+    """URL of a single vehicle, or of an action on it (e.g. ``"purchase"``)."""
+    url = f"{VEHICLES_URL}/{vehicle_id}"
+    return f"{url}/{action}" if action else url
