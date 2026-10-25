@@ -2,10 +2,20 @@
 import type { FuelType, Transmission, VehicleCategory } from '../api/types'
 
 const priceFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+const wholePriceFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+})
 
 /** `"21999.99"` → `"$21,999.99"`. Prices arrive as decimal strings from the API. */
 export function formatPrice(price: string): string {
   return priceFormatter.format(Number(price))
+}
+
+/** `"25000"` → `"$25,000"`: for budgets and ranges, where cents are noise. */
+export function formatWholePrice(price: string | number): string {
+  return wholePriceFormatter.format(Number(price))
 }
 
 const CATEGORY_LABELS: Record<VehicleCategory, string> = {

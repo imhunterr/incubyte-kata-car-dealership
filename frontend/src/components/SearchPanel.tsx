@@ -2,7 +2,9 @@
  * Search and filter form for the inventory, laid out as a sidebar.
  *
  * Price bounds are checked here first (non-negative, min ≤ max) for instant
- * feedback; the API applies the same rules.
+ * feedback; the API applies the same rules. The form edits a draft; the
+ * dashboard remounts it (via `key`) whenever the applied filters change
+ * elsewhere, e.g. from a quick filter or a removed chip.
  */
 import { useState, type FormEvent } from 'react'
 
@@ -14,12 +16,14 @@ import { SelectField } from './SelectField'
 import { TextField } from './TextField'
 
 interface SearchPanelProps {
+  /** Filters the form starts with: the ones currently applied. */
+  initialFilters?: VehicleSearch
   onSearch: (filters: VehicleSearch) => void
   onClear: () => void
 }
 
-export function SearchPanel({ onSearch, onClear }: SearchPanelProps) {
-  const [filters, setFilters] = useState(EMPTY_FILTERS)
+export function SearchPanel({ initialFilters = {}, onSearch, onClear }: SearchPanelProps) {
+  const [filters, setFilters] = useState({ ...EMPTY_FILTERS, ...initialFilters })
   const [priceError, setPriceError] = useState<string | undefined>()
 
   function update(field: keyof VehicleSearch, value: string) {

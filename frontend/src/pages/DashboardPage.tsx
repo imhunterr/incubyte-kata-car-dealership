@@ -13,8 +13,11 @@ import { hasFilters, listVehicles, purchaseVehicle, searchVehicles } from '../ap
 import { useAuth } from '../auth/useAuth'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
+import { ActiveFilters } from '../components/ActiveFilters'
+import { QuickFilters } from '../components/QuickFilters'
 import { SearchPanel } from '../components/SearchPanel'
 import { VehicleCard } from '../components/VehicleCard'
+import { compactFilters } from '../lib/filters'
 
 type LoadState =
   | { status: 'loading' }
@@ -29,6 +32,8 @@ export function DashboardPage() {
   const [actionError, setActionError] = useState<string | null>(null)
   /** The filters behind the current list; empty means "whole inventory". */
   const [filters, setFilters] = useState<VehicleSearch>({})
+  /** Makes in the whole inventory, for the brand shortcuts. */
+  const [brands, setBrands] = useState<string[]>([])
 
   /** Fetch the vehicles matching `filters` and describe the outcome as a load state. */
   const fetchVehicles = useCallback(
@@ -45,20 +50,29 @@ export function DashboardPage() {
     [request],
   )
 
+  /** Show a load result; an unfiltered list also refreshes the brand shortcuts. */
+  const applyLoad = useCallback((state: LoadState, appliedFilters: VehicleSearch) => {
+    setLoad(state)
+    if (state.status === 'loaded' && !hasFilters(appliedFilters)) {
+      setBrands([...new Set(state.vehicles.map((vehicle) => vehicle.make))].sort())
+    }
+  }, [])
+
   useEffect(() => {
     let active = true // ignore a response that arrives after unmounting
     void fetchVehicles({}).then((state) => {
-      if (active) setLoad(state)
+      if (active) applyLoad(state, {})
     })
     return () => {
       active = false
     }
-  }, [fetchVehicles])
+  }, [fetchVehicles, applyLoad])
 
   async function showVehicles(newFilters: VehicleSearch) {
-    setFilters(newFilters)
+    const applied = compactFilters(newFilters)
+    setFilters(applied)
     setLoad({ status: 'loading' })
-    setLoad(await fetchVehicles(newFilters))
+    applyLoad(await fetchVehicles(applied), applied)
   }
 
   /** Replace one vehicle in the loaded list (e.g. with its new stock). */
@@ -103,6 +117,11 @@ export function DashboardPage() {
         <p className="mt-2 max-w-xl text-navy-200">
           Search by make, model, body type or budget, then buy in one click.
         </p>
+        <QuickFilters
+          filters={filters}
+          brands={brands}
+          onChange={(newFilters) => void showVehicles(newFilters)}
+        />
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -top-16 -right-16 h-64 w-64 rounded-full bg-amber-400/10"
@@ -112,6 +131,8 @@ export function DashboardPage() {
       <div className="mt-8 grid gap-6 lg:grid-cols-[18rem_1fr]">
         <aside>
           <SearchPanel
+            key={JSON.stringify(filters)}
+            initialFilters={filters}
             onSearch={(newFilters) => void showVehicles(newFilters)}
             onClear={() => void showVehicles({})}
           />
@@ -126,6 +147,11 @@ export function DashboardPage() {
               </p>
             )}
           </div>
+
+          <ActiveFilters
+            filters={filters}
+            onChange={(newFilters) => void showVehicles(newFilters)}
+          />
 
           <div role="status" className="mt-4 empty:hidden">
             {notice && (
