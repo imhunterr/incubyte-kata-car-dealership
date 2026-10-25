@@ -18,6 +18,10 @@ const EMPTY_FILTERS: Required<VehicleSearch> = {
   category: '',
   min_price: '',
   max_price: '',
+  fuel_type: '',
+  transmission: '',
+  min_year: '',
+  max_mileage: '',
 }
 
 interface SearchPanelProps {

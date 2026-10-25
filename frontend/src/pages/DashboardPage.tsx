@@ -93,8 +93,24 @@ export function DashboardPage() {
 
   return (
     <section>
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Vehicles</h1>
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy-900 via-navy-800 to-navy-700 px-6 py-10 text-white shadow-lg sm:px-10">
+        <p className="text-sm font-semibold tracking-wider text-amber-300 uppercase">
+          Quality cars, transparent prices
+        </p>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
+          Find your next car
+        </h1>
+        <p className="mt-2 max-w-xl text-navy-200">
+          Search by make, model, body type or budget, then buy in one click.
+        </p>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-16 -right-16 h-64 w-64 rounded-full bg-amber-400/10"
+        />
+      </div>
+
+      <div className="mt-8 flex flex-wrap items-end justify-between gap-2">
+        <h2 className="text-2xl font-bold tracking-tight">Vehicles</h2>
         {load.status === 'loaded' && (
           <p className="text-sm text-slate-600">
             {load.vehicles.length} {load.vehicles.length === 1 ? 'vehicle' : 'vehicles'}

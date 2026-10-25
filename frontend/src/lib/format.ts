@@ -1,5 +1,5 @@
 /** Display formatting shared across the UI. */
-import type { VehicleCategory } from '../api/types'
+import type { FuelType, Transmission, VehicleCategory } from '../api/types'
 
 const priceFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
 
@@ -22,4 +22,29 @@ const CATEGORY_LABELS: Record<VehicleCategory, string> = {
 /** Human-readable category name, e.g. `"suv"` → `"SUV"`. */
 export function formatCategory(category: VehicleCategory): string {
   return CATEGORY_LABELS[category]
+}
+
+const FUEL_LABELS: Record<FuelType, string> = {
+  petrol: 'Petrol',
+  diesel: 'Diesel',
+  cng: 'CNG',
+  electric: 'Electric',
+  hybrid: 'Hybrid',
+}
+
+/** `"cng"` → `"CNG"`. */
+export function formatFuel(fuel: FuelType): string {
+  return FUEL_LABELS[fuel]
+}
+
+/** `"automatic"` → `"Automatic"`. */
+export function formatTransmission(transmission: Transmission): string {
+  return transmission === 'manual' ? 'Manual' : 'Automatic'
+}
+
+const numberFormatter = new Intl.NumberFormat('en-US')
+
+/** `18500` → `"18,500 km"`. */
+export function formatMileage(kilometres: number): string {
+  return `${numberFormatter.format(kilometres)} km`
 }
