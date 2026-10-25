@@ -1,8 +1,9 @@
 import { screen, within } from '@testing-library/react'
+import type { UserEvent } from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import type { User } from '../api/types'
+import type { User, Vehicle } from '../api/types'
 import { admin, customer, inventory, storeSession } from '../test/fixtures'
 import { renderApp } from '../test/render'
 import { server } from '../test/server'
@@ -47,5 +48,180 @@ describe('DashboardPage: admin controls', () => {
     expect(
       screen.queryByRole('button', { name: /^(Edit|Restock|Delete) / }),
     ).not.toBeInTheDocument()
+  })
+})
+
+const NEXT_YEAR = new Date().getFullYear() + 1
+
+const civic: Vehicle = {
+  id: 99,
+  make: 'Honda',
+  model: 'Civic',
+  category: 'hatchback',
+  price: '23500.00',
+  quantity: 4,
+  year: 2023,
+  fuel_type: 'petrol',
+  transmission: 'manual',
+  mileage_km: 1200,
+}
+
+interface FormValues {
+  make?: string
+  model?: string
+  category?: string
+  price?: string
+  quantity?: string
+  year?: string
+  fuel?: string
+  transmission?: string
+  mileage?: string
+}
+
+/** Fill the vehicle form inside `dialog`, replacing what is there. */
+async function fillVehicleForm(user: UserEvent, dialog: HTMLElement, values: FormValues) {
+  const form = within(dialog)
+  const typeInto = async (label: string, value: string | undefined) => {
+    if (value === undefined) return
+    const field = form.getByLabelText(label)
+    await user.clear(field)
+    if (value) await user.type(field, value)
+  }
+  await typeInto('Make', values.make)
+  await typeInto('Model', values.model)
+  if (values.category) await user.selectOptions(form.getByLabelText('Category'), values.category)
+  await typeInto('Price (USD)', values.price)
+  await typeInto('Units in stock', values.quantity)
+  await typeInto('Year', values.year)
+  if (values.fuel) await user.selectOptions(form.getByLabelText('Fuel type'), values.fuel)
+  if (values.transmission)
+    await user.selectOptions(form.getByLabelText('Transmission'), values.transmission)
+  await typeInto('Mileage (km)', values.mileage)
+}
+
+const CIVIC_FORM: FormValues = {
+  make: 'Honda',
+  model: 'Civic',
+  category: 'hatchback',
+  price: '23500',
+  quantity: '4',
+  year: '2023',
+  fuel: 'petrol',
+  transmission: 'manual',
+  mileage: '1200',
+}
+
+async function openAddDialog(user: UserEvent) {
+  await user.click(screen.getByRole('button', { name: 'Add vehicle' }))
+  return screen.getByRole('dialog', { name: 'Add vehicle' })
+}
+
+describe('DashboardPage: adding a vehicle', () => {
+  it('opens a dialog with the vehicle form, focused on the first field', async () => {
+    const { user } = await renderLoadedDashboard()
+
+    const dialog = await openAddDialog(user)
+
+    expect(dialog).toHaveAttribute('aria-modal', 'true')
+    expect(within(dialog).getByLabelText('Make')).toHaveFocus()
+  })
+
+  it('creates the vehicle and shows it in the list', async () => {
+    let body: unknown
+    server.use(
+      http.post('*/api/vehicles', async ({ request }) => {
+        body = await request.json()
+        return HttpResponse.json(civic, { status: 201 })
+      }),
+    )
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openAddDialog(user)
+
+    await fillVehicleForm(user, dialog, CIVIC_FORM)
+    await user.click(within(dialog).getByRole('button', { name: 'Save vehicle' }))
+
+    expect(await screen.findByRole('heading', { name: 'Honda Civic' })).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Added Honda Civic.')
+    expect(body).toEqual({
+      make: 'Honda',
+      model: 'Civic',
+      category: 'hatchback',
+      price: '23500',
+      quantity: 4,
+      year: 2023,
+      fuel_type: 'petrol',
+      transmission: 'manual',
+      mileage_km: 1200,
+    })
+  })
+
+  it('checks every field before calling the API', async () => {
+    // No POST handler: a request would fail the test as unhandled.
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openAddDialog(user)
+
+    await user.click(within(dialog).getByRole('button', { name: 'Save vehicle' }))
+
+    const form = within(dialog)
+    expect(form.getByText('Enter a make')).toBeInTheDocument()
+    expect(form.getByText('Enter a model')).toBeInTheDocument()
+    expect(form.getByText('Enter a price')).toBeInTheDocument()
+    expect(form.getByText('Enter the number of units in stock')).toBeInTheDocument()
+    expect(form.getByText('Enter the model year')).toBeInTheDocument()
+    expect(form.getByText('Enter the mileage')).toBeInTheDocument()
+  })
+
+  it.each([
+    [{ price: '0' }, 'Price must be greater than 0'],
+    [{ price: '19.999' }, 'Use at most 2 decimal places'],
+    [{ quantity: '1.5' }, 'Units in stock must be a whole number of 0 or more'],
+    [{ quantity: '-1' }, 'Units in stock must be a whole number of 0 or more'],
+    [{ year: '1985' }, `Year must be between 1990 and ${NEXT_YEAR}`],
+    [{ year: String(NEXT_YEAR + 1) }, `Year must be between 1990 and ${NEXT_YEAR}`],
+    [{ mileage: '-5' }, 'Mileage must be a whole number from 0 to 1,000,000'],
+    [{ mileage: '1000001' }, 'Mileage must be a whole number from 0 to 1,000,000'],
+  ])('rejects %o with "%s"', async (override, message) => {
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openAddDialog(user)
+
+    await fillVehicleForm(user, dialog, { ...CIVIC_FORM, ...override })
+    await user.click(within(dialog).getByRole('button', { name: 'Save vehicle' }))
+
+    expect(within(dialog).getByText(message)).toBeInTheDocument()
+  })
+
+  it('shows API errors inside the dialog and keeps it open', async () => {
+    server.use(
+      http.post('*/api/vehicles', () =>
+        HttpResponse.json({ detail: 'Admin privileges required' }, { status: 403 }),
+      ),
+    )
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openAddDialog(user)
+
+    await fillVehicleForm(user, dialog, CIVIC_FORM)
+    await user.click(within(dialog).getByRole('button', { name: 'Save vehicle' }))
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Admin privileges required')
+    expect(screen.getByRole('dialog', { name: 'Add vehicle' })).toBeInTheDocument()
+  })
+
+  it('closes without saving on Cancel', async () => {
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openAddDialog(user)
+
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('closes without saving on Escape', async () => {
+    const { user } = await renderLoadedDashboard()
+    await openAddDialog(user)
+
+    await user.keyboard('{Escape}')
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })
