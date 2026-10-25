@@ -4,8 +4,9 @@ Raw, unedited prompts sent to AI tools while building this project, in chronolog
 
 - **Tool:** Claude Code (VS Code extension), model Claude Opus 5.5
 - Prompts are copied verbatim (typos included). Nothing is summarised or rewritten.
-- Full session transcripts (these prompts plus the assistant's replies) are in
-  [docs/transcripts/](docs/transcripts/), exported by `scripts/export-transcript.py`.
+- Full session transcript (these prompts plus the assistant's replies):
+  [docs/transcripts/claude-code-session-transcript.md](docs/transcripts/claude-code-session-transcript.md),
+  exported by `scripts/export-transcript.py`.
 
 ---
 
@@ -100,3 +101,9 @@ It has ran succesfully add the below details in readme so that they can test
 
 Email : admin_incubyte@gmail.com
 Password : incubyte0506
+
+---
+
+## Prompt 11 — 2026-10-25 23:15:11 IST
+
+push the transcript but make sure it is renamed properly or else they wouldnt be able to find it

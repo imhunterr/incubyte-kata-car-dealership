@@ -226,6 +226,7 @@ backend/            FastAPI application
 frontend/           React single-page application
 docs/SPEC.md        specification and test list
 docs/screenshots/   screenshots used in this README
+docs/transcripts/   full Claude Code session transcript
 docs/TEST_REPORT.md generated test report
 scripts/            end-to-end smoke test and test-report generator
 docker-compose.yml  PostgreSQL, API and web containers
@@ -247,8 +248,8 @@ Every commit the AI contributed to carries a
 [PROMPTS.md](PROMPTS.md) holds every prompt I gave Claude Code, verbatim. A
 `UserPromptSubmit` hook ([.claude/hooks/log-prompt.sh](.claude/hooks/log-prompt.sh))
 appended each one automatically, so the log never depended on anyone
-remembering to update it. The full session transcripts are exported in
-[docs/transcripts/](docs/transcripts/).
+remembering to update it. The full session transcript, with the assistant's replies, is in
+[docs/transcripts/claude-code-session-transcript.md](docs/transcripts/claude-code-session-transcript.md).
 
 ### How I used it
 

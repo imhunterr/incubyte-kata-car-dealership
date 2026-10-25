@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Export Claude Code session transcripts for this project to Markdown.
 
-    python3 scripts/export-transcript.py            # writes docs/transcripts/
+    python3 scripts/export-transcript.py
+    python3 scripts/export-transcript.py --stop-before "text of a user message"
 
 Claude Code stores each session as JSON lines under
 ``~/.claude/projects/<project path with / replaced by ->/``. This script turns
-every session into ``docs/transcripts/<date>-<session id>.md`` containing, in
-order:
+them into ``docs/transcripts/claude-code-session-transcript.md`` (sessions
+after the first get ``-2``, ``-3``, ... suffixes), containing, in order:
 
 - every user message, verbatim (including messages sent while the assistant
   was working, and answers given to its multiple-choice questions);
@@ -18,8 +19,12 @@ Left out: tool outputs (file contents, command output), the model's private
 reasoning, and context the tool injects automatically into messages
 (``<system-reminder>`` blocks, which include account details). Nothing is
 summarised or reworded.
+
+``--stop-before TEXT`` ends the export just before the first user message
+that starts with TEXT; the header records where the transcript ends.
 """
 
+import argparse
 import json
 import re
 import sys
@@ -63,19 +68,41 @@ def describe_tool(name: str, tool_input: dict[str, object]) -> str:
     return ""
 
 
-def render_session(path: Path) -> tuple[str, str]:
-    """Return (output file name, Markdown) for one session file."""
+def user_text(entry: dict[str, object]) -> str:
+    """The typed text of a user entry (a prompt or a mid-turn message), if any."""
+    if entry.get("type") == "attachment":
+        attachment = entry.get("attachment") or {}
+        if isinstance(attachment, dict) and attachment.get("type") == "queued_command":
+            return clean(text_of(attachment.get("prompt")))
+        return ""
+    if entry.get("type") == "user" and not entry.get("isMeta"):
+        message = entry.get("message") or {}
+        return clean(text_of(message.get("content") if isinstance(message, dict) else None))
+    return ""
+
+
+def render_session(path: Path, stop_before: str | None) -> str:
+    """Return the Markdown transcript of one session file."""
     lines = [json.loads(line) for line in path.open(encoding="utf-8")]
     entries = [entry for entry in lines if not entry.get("isSidechain")]
-    started = next((e["timestamp"] for e in entries if e.get("timestamp")), "")
-    session_id = path.stem
+    if stop_before:
+        for index, entry in enumerate(entries):
+            if user_text(entry).startswith(stop_before):
+                entries = entries[:index]
+                break
+    timestamps = [e["timestamp"] for e in entries if e.get("timestamp")]
+    started, ended = (timestamps[0], timestamps[-1]) if timestamps else ("", "")
 
     out = [
-        f"# Claude Code session `{session_id}`",
+        "# Claude Code session transcript",
         "",
-        f"Started {started[:16].replace('T', ' ')} UTC. Exported verbatim by",
-        "`scripts/export-transcript.py` (tool outputs, private reasoning and",
-        "automatically injected context are omitted; see the script's docstring).",
+        f"Session `{path.stem}`, {started[:16].replace('T', ' ')} to"
+        f" {ended[:16].replace('T', ' ')} UTC.",
+        "",
+        "Exported verbatim by `scripts/export-transcript.py`: every message from",
+        "the user and the assistant, plus one line per tool call. Tool outputs,",
+        "private reasoning and automatically injected context are omitted (see the",
+        "script's docstring). The prompts alone are also in [PROMPTS.md](../../PROMPTS.md).",
         "",
     ]
     question_ids: set[str] = set()
@@ -122,19 +149,28 @@ def render_session(path: Path) -> tuple[str, str]:
                         out.append(f"> `{name}`" + (f": {detail}" if detail else ""))
                         out.append("")
 
-    return f"{started[:10]}-{session_id}.md", "\n".join(out).rstrip() + "\n"
+    return "\n".join(out).rstrip() + "\n"
 
 
 def main() -> int:
-    sessions = sorted(SOURCE.glob("*.jsonl"))
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument(
+        "--stop-before",
+        metavar="TEXT",
+        help="end the export before the first user message starting with TEXT",
+    )
+    args = parser.parse_args()
+
+    sessions = sorted(SOURCE.glob("*.jsonl"), key=lambda path: path.stat().st_mtime)
     if not sessions:
         print(f"No sessions found in {SOURCE}", file=sys.stderr)
         return 1
     OUTPUT.mkdir(parents=True, exist_ok=True)
-    for session in sessions:
-        name, markdown = render_session(session)
-        (OUTPUT / name).write_text(markdown, encoding="utf-8")
-        print(f"Wrote {OUTPUT.relative_to(REPO) / name}")
+    for number, session in enumerate(sessions, start=1):
+        suffix = "" if number == 1 else f"-{number}"
+        target = OUTPUT / f"claude-code-session-transcript{suffix}.md"
+        target.write_text(render_session(session, args.stop_before), encoding="utf-8")
+        print(f"Wrote {target.relative_to(REPO)}")
     return 0
 
 
