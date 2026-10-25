@@ -43,3 +43,11 @@ Since we are at it, can you lay out how many phases are we targetting and what t
 ## Prompt 4 — 2026-10-25 20:52:36 IST
 
 The phases look good. Yes you can get started.
+
+---
+
+## Prompt 5 — 2026-10-25 21:07:43 IST
+
+If needed, you can note down the need to update the readme in a md file in docs/. You can use it as a running log of what needs to be updated in the end if there is any slippage. Make sure to keep it out of git. Add it to gitignore. And best case scenario is to not have any pending work. 
+
+Go on with phase 2.
