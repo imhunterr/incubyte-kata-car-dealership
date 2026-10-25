@@ -175,6 +175,9 @@ describe('DashboardPage: adding a vehicle', () => {
   it.each([
     [{ price: '0' }, 'Price must be greater than 0'],
     [{ price: '19.999' }, 'Use at most 2 decimal places'],
+    [{ price: '100000000' }, 'Price must be at most $99,999,999.99'],
+    [{ make: 'x'.repeat(51) }, 'Make must be at most 50 characters'],
+    [{ model: 'x'.repeat(51) }, 'Model must be at most 50 characters'],
     [{ quantity: '1.5' }, 'Units in stock must be a whole number of 0 or more'],
     [{ quantity: '-1' }, 'Units in stock must be a whole number of 0 or more'],
     [{ year: '1985' }, `Year must be between 1990 and ${NEXT_YEAR}`],
@@ -214,6 +217,34 @@ describe('DashboardPage: adding a vehicle', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('closes without saving when clicking outside the dialog', async () => {
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openAddDialog(user)
+
+    await user.click(dialog.parentElement as HTMLElement)
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('adds a new brand to the brand shortcuts, once', async () => {
+    server.use(
+      http.post('*/api/vehicles', () =>
+        HttpResponse.json({ ...civic, make: 'Toyota', model: 'Yaris' }, { status: 201 }),
+      ),
+    )
+    const { user } = await renderLoadedDashboard()
+    const dialog = await openAddDialog(user)
+
+    await fillVehicleForm(user, dialog, { ...CIVIC_FORM, make: 'Toyota', model: 'Yaris' })
+    await user.click(within(dialog).getByRole('button', { name: 'Save vehicle' }))
+
+    await screen.findByRole('heading', { name: 'Toyota Yaris' })
+    const brands = within(screen.getByRole('group', { name: 'Popular brands' }))
+      .getAllByRole('button')
+      .map((button) => button.textContent)
+    expect(brands).toEqual(['Ford', 'Toyota'])
   })
 
   it('closes without saving on Escape', async () => {
