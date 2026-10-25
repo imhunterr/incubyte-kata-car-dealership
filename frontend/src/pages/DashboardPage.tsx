@@ -9,7 +9,7 @@ import { useId, useState } from 'react'
 
 import { ApiError, messageFor } from '../api/client'
 import type { Vehicle, VehicleInput } from '../api/types'
-import { createVehicle, hasFilters, purchaseVehicle } from '../api/vehicles'
+import { createVehicle, hasFilters, purchaseVehicle, updateVehicle } from '../api/vehicles'
 import { useAuth } from '../auth/useAuth'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
@@ -19,11 +19,14 @@ import { Modal } from '../components/Modal'
 import { SearchPanel } from '../components/SearchPanel'
 import { VehicleCard, type AdminActions } from '../components/VehicleCard'
 import { VehicleForm } from '../components/VehicleForm'
-import { EMPTY_VEHICLE_FORM } from '../lib/vehicleForm'
+import { EMPTY_VEHICLE_FORM, formValuesFor } from '../lib/vehicleForm'
 import { SelectField } from '../components/SelectField'
 import { useInventory } from '../hooks/useInventory'
 import { useShortlist } from '../hooks/useShortlist'
 import { SORT_OPTIONS, sortVehicles, type SortOrder } from '../lib/sorting'
+
+/** Which admin dialog is open, and for which vehicle. */
+type AdminDialog = { kind: 'add' } | { kind: 'edit'; vehicle: Vehicle }
 
 export function DashboardPage() {
   const { request, user, isAdmin } = useAuth()
@@ -40,7 +43,7 @@ export function DashboardPage() {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const filterPanelId = useId()
   /** The admin dialog currently open, if any. */
-  const [dialog, setDialog] = useState<{ kind: 'add' } | null>(null)
+  const [dialog, setDialog] = useState<AdminDialog | null>(null)
   const closeDialog = () => setDialog(null)
 
   async function handlePurchase(vehicle: Vehicle) {
@@ -69,9 +72,17 @@ export function DashboardPage() {
     setNotice(`Added ${created.make} ${created.model}.`)
   }
 
-  // Wired up to dialogs in the following steps.
+  async function handleUpdate(vehicle: Vehicle, input: VehicleInput) {
+    const saved = await updateVehicle(request, vehicle.id, input)
+    replaceVehicle(saved)
+    setDialog(null)
+    setActionError(null)
+    setNotice(`Saved ${saved.make} ${saved.model}.`)
+  }
+
+  // Restock and Delete are wired up to dialogs in the following steps.
   const adminActions: AdminActions = {
-    onEdit: () => undefined,
+    onEdit: (vehicle) => setDialog({ kind: 'edit', vehicle }),
     onRestock: () => undefined,
     onDelete: () => undefined,
   }
@@ -214,6 +225,15 @@ export function DashboardPage() {
           <VehicleForm
             initialValues={EMPTY_VEHICLE_FORM}
             onSubmit={handleCreate}
+            onCancel={closeDialog}
+          />
+        </Modal>
+      )}
+      {dialog?.kind === 'edit' && (
+        <Modal title={`Edit ${dialog.vehicle.make} ${dialog.vehicle.model}`} onClose={closeDialog}>
+          <VehicleForm
+            initialValues={formValuesFor(dialog.vehicle)}
+            onSubmit={(input) => handleUpdate(dialog.vehicle, input)}
             onCancel={closeDialog}
           />
         </Modal>

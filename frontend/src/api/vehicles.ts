@@ -28,3 +28,12 @@ export function purchaseVehicle(request: AuthRequest, id: number): Promise<Vehic
 export function createVehicle(request: AuthRequest, input: VehicleInput): Promise<Vehicle> {
   return request<Vehicle>('/vehicles', { method: 'POST', body: input })
 }
+
+/** Replace every editable field of a vehicle (PUT). */
+export function updateVehicle(
+  request: AuthRequest,
+  id: number,
+  input: VehicleInput,
+): Promise<Vehicle> {
+  return request<Vehicle>(`/vehicles/${id}`, { method: 'PUT', body: input })
+}
