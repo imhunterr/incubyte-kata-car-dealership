@@ -8,7 +8,7 @@ from typing import Any
 
 from fastapi import APIRouter, status
 
-from app.api.deps import AdminUserDep, VehicleServiceDep
+from app.api.deps import AdminUserDep, CurrentUserDep, VehicleServiceDep
 from app.schemas.vehicles import VehicleRead, VehicleWrite
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
@@ -17,6 +17,15 @@ _AUTH_ERRORS: dict[int | str, dict[str, Any]] = {
     status.HTTP_401_UNAUTHORIZED: {"description": "Missing or invalid access token"},
     status.HTTP_403_FORBIDDEN: {"description": "Admin privileges required"},
 }
+
+
+@router.get(
+    "",
+    responses={status.HTTP_401_UNAUTHORIZED: _AUTH_ERRORS[status.HTTP_401_UNAUTHORIZED]},
+)
+def list_vehicles(vehicles: VehicleServiceDep, _user: CurrentUserDep) -> list[VehicleRead]:
+    """List every vehicle, including ones that are out of stock, ordered by id."""
+    return [VehicleRead.model_validate(vehicle) for vehicle in vehicles.list_all()]
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, responses=_AUTH_ERRORS)
