@@ -2,6 +2,7 @@
 import { Link, Outlet } from 'react-router'
 
 import { useAuth } from '../auth/useAuth'
+import { Button } from './Button'
 
 export function Layout() {
   const { user, isAdmin, logout } = useAuth()
@@ -26,13 +27,9 @@ export function Layout() {
                   Admin
                 </span>
               )}
-              <button
-                type="button"
-                onClick={logout}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-indigo-500"
-              >
+              <Button variant="secondary" onClick={logout}>
                 Log out
-              </button>
+              </Button>
             </div>
           )}
         </div>
