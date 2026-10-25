@@ -16,14 +16,14 @@ import { Button } from '../components/Button'
 import { ActiveFilters } from '../components/ActiveFilters'
 import { DashboardHero } from '../components/DashboardHero'
 import { SearchPanel } from '../components/SearchPanel'
-import { VehicleCard } from '../components/VehicleCard'
+import { VehicleCard, type AdminActions } from '../components/VehicleCard'
 import { SelectField } from '../components/SelectField'
 import { useInventory } from '../hooks/useInventory'
 import { useShortlist } from '../hooks/useShortlist'
 import { SORT_OPTIONS, sortVehicles, type SortOrder } from '../lib/sorting'
 
 export function DashboardPage() {
-  const { request, user } = useAuth()
+  const { request, user, isAdmin } = useAuth()
   // The dashboard is only rendered for logged-in users.
   const shortlist = useShortlist(user!.id)
   const [showShortlistOnly, setShowShortlistOnly] = useState(false)
@@ -53,6 +53,13 @@ export function DashboardPage() {
     } finally {
       setPurchasingId(null)
     }
+  }
+
+  // Wired up to dialogs in the following steps.
+  const adminActions: AdminActions = {
+    onEdit: () => undefined,
+    onRestock: () => undefined,
+    onDelete: () => undefined,
   }
 
   const loadedVehicles = load.status === 'loaded' ? load.vehicles : []
@@ -113,6 +120,7 @@ export function DashboardPage() {
               )}
             </div>
             <div className="flex flex-wrap items-end gap-3">
+              {isAdmin && <Button onClick={() => undefined}>Add vehicle</Button>}
               <Button
                 variant="secondary"
                 aria-pressed={showShortlistOnly}
@@ -178,6 +186,7 @@ export function DashboardPage() {
                     purchasing={purchasingId === vehicle.id}
                     saved={shortlist.has(vehicle.id)}
                     onToggleSaved={(saved) => shortlist.toggle(saved.id)}
+                    adminActions={isAdmin ? adminActions : undefined}
                   />
                 ))}
               </ul>
