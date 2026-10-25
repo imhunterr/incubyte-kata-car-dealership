@@ -37,6 +37,17 @@ class VehicleWrite(BaseModel):
     quantity: StockQuantity
 
 
+MAX_RESTOCK_QUANTITY = 10_000
+"""Upper bound per restock: catches typos and keeps stock far from integer overflow."""
+
+
+class RestockRequest(BaseModel):
+    """Body of ``POST /api/vehicles/{id}/restock``."""
+
+    quantity: Annotated[int, Field(ge=1, le=MAX_RESTOCK_QUANTITY, strict=True)]
+    """Number of units to add."""
+
+
 class VehicleRead(BaseModel):
     """A vehicle as returned by the API. ``price`` is serialised as a string
     (e.g. ``"21999.99"``) so no precision is lost in JSON."""

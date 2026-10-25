@@ -98,6 +98,26 @@ class VehicleRepository:
         self._session.commit()
         return vehicle
 
+    def add_to_stock(self, vehicle_id: int, units: int) -> Vehicle | None:
+        """Atomically increase a vehicle's stock by ``units``.
+
+        ``SET quantity = quantity + :units`` is computed by the database, so
+        concurrent restocks never overwrite each other's additions.
+
+        Returns:
+            The updated vehicle, or ``None`` if it does not exist.
+        """
+        statement = (
+            update(Vehicle)
+            .where(Vehicle.id == vehicle_id)
+            .values(quantity=Vehicle.quantity + units)
+            .returning(Vehicle)
+            .execution_options(populate_existing=True)
+        )
+        vehicle = self._session.scalars(statement).one_or_none()
+        self._session.commit()
+        return vehicle
+
     def delete(self, vehicle: Vehicle) -> None:
         """Remove a vehicle permanently."""
         self._session.delete(vehicle)

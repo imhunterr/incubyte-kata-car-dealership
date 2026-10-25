@@ -62,6 +62,19 @@ class VehicleService:
         self._get_or_raise(vehicle_id)
         raise OutOfStockError(vehicle_id)
 
+    def restock(self, vehicle_id: int, units: int) -> Vehicle:
+        """Add ``units`` to a vehicle's stock and return it.
+
+        Safe under concurrency: the increment is a single atomic update.
+
+        Raises:
+            VehicleNotFoundError: If no vehicle has this id.
+        """
+        vehicle = self._vehicles.add_to_stock(vehicle_id, units)
+        if vehicle is None:
+            raise VehicleNotFoundError(vehicle_id)
+        return vehicle
+
     def _get_or_raise(self, vehicle_id: int) -> Vehicle:
         vehicle = self._vehicles.get(vehicle_id)
         if vehicle is None:

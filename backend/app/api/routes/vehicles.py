@@ -9,7 +9,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import AdminUserDep, CurrentUserDep, VehicleServiceDep
-from app.schemas.vehicles import VehicleRead, VehicleSearch, VehicleWrite
+from app.schemas.vehicles import RestockRequest, VehicleRead, VehicleSearch, VehicleWrite
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
@@ -82,3 +82,11 @@ def purchase_vehicle(
 ) -> VehicleRead:
     """Buy one unit of a vehicle, decreasing its stock by one."""
     return VehicleRead.model_validate(vehicles.purchase(vehicle_id))
+
+
+@router.post("/{vehicle_id}/restock", responses=_AUTH_ERRORS | _NOT_FOUND)
+def restock_vehicle(
+    vehicle_id: int, body: RestockRequest, vehicles: VehicleServiceDep, _admin: AdminUserDep
+) -> VehicleRead:
+    """Add units to a vehicle's stock (admin only)."""
+    return VehicleRead.model_validate(vehicles.restock(vehicle_id, body.quantity))
