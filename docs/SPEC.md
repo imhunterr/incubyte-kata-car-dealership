@@ -165,32 +165,34 @@ Admin CLI
 
 Create (admin)
 
-- [ ] Valid body → 201 with generated `id`.
-- [ ] Non-admin → 403; anonymous → 401.
-- [ ] Missing field → 422 (one case per field).
-- [ ] `price <= 0` → 422; more than 2 decimal places → 422.
-- [ ] `quantity < 0` → 422; non-integer quantity → 422.
-- [ ] Unknown category → 422.
-- [ ] Blank / whitespace-only make or model → 422; values are trimmed.
+- [x] Valid body → 201 with generated `id`.
+- [x] Non-admin → 403; anonymous → 401.
+- [x] Missing field → 422 (one case per field).
+- [x] `price <= 0` → 422; more than 2 decimal places → 422.
+- [x] `quantity < 0` → 422; non-integer quantity → 422.
+- [x] Unknown category → 422.
+- [x] Blank / whitespace-only make or model → 422; values are trimmed.
+- [x] Quantity must be a JSON integer: `"3"`, `2.5` and `true` → 422.
+- [x] The database itself rejects `quantity < 0` and `price <= 0` (CHECK constraints).
 
 List
 
-- [ ] Empty database → 200 `[]`.
-- [ ] Returns all vehicles ordered by `id`, including zero-stock ones.
-- [ ] Anonymous → 401.
+- [x] Empty database → 200 `[]`.
+- [x] Returns all vehicles ordered by `id`, including zero-stock ones.
+- [x] Anonymous → 401.
 
 Update (admin)
 
-- [ ] Valid body → 200 with updated fields; change is persisted.
-- [ ] Unknown id → 404.
-- [ ] Same validation rules as create → 422.
-- [ ] Non-admin → 403.
+- [x] Valid body → 200 with updated fields; change is persisted.
+- [x] Unknown id → 404.
+- [x] Same validation rules as create → 422.
+- [x] Non-admin → 403.
 
 Delete (admin)
 
-- [ ] Existing id → 204; the vehicle is gone afterwards.
-- [ ] Unknown id → 404.
-- [ ] Non-admin → 403; anonymous → 401.
+- [x] Existing id → 204; the vehicle is gone afterwards.
+- [x] Unknown id → 404.
+- [x] Non-admin → 403; anonymous → 401.
 
 ### Slice 3 — Search
 

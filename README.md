@@ -73,6 +73,12 @@ The backend reads its settings from environment variables or `backend/.env`
 - **Login failures are indistinguishable.** An unknown e-mail and a wrong
   password return the same 401, and take comparable time, so the endpoint
   cannot be used to discover registered e-mails.
+- **Money is exact.** Prices are `Decimal` values in a `NUMERIC(10, 2)` column
+  and are sent over JSON as strings (`"21999.99"`), so no floating-point
+  rounding ever touches them.
+- **Invariants are enforced twice.** The API validates input, and the
+  database has CHECK constraints (`quantity >= 0`, `price > 0`) so no code
+  path can store impossible stock or prices.
 - **E-mails are case-insensitive** (normalised to lower case), and the
   database's unique constraint is the single, race-safe guard against
   duplicates.
