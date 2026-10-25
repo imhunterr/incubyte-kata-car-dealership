@@ -1,5 +1,6 @@
 """Tests for user registration, ``POST /api/auth/register``."""
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -65,3 +66,59 @@ def test_register_stores_the_email_in_lower_case(client: TestClient) -> None:
     )
 
     assert response.json()["email"] == "alice@example.com"
+
+
+@pytest.mark.parametrize(
+    "email", ["", "not-an-email", "missing-at.example.com", "alice@", "@example.com"]
+)
+def test_register_rejects_an_invalid_email_with_422(client: TestClient, email: str) -> None:
+    response = client.post(REGISTER_URL, json={"email": email, "password": "correct-horse"})
+
+    assert response.status_code == 422
+
+
+def test_register_rejects_a_password_shorter_than_8_characters(client: TestClient) -> None:
+    response = client.post(REGISTER_URL, json={"email": "alice@example.com", "password": "short12"})
+
+    assert response.status_code == 422
+
+
+def test_register_accepts_a_password_of_exactly_8_characters(client: TestClient) -> None:
+    response = client.post(
+        REGISTER_URL, json={"email": "alice@example.com", "password": "exactly8"}
+    )
+
+    assert response.status_code == 201
+
+
+def test_register_rejects_a_password_longer_than_128_characters(client: TestClient) -> None:
+    # An upper bound keeps a single request from forcing an expensive hash of
+    # an arbitrarily large input.
+    response = client.post(REGISTER_URL, json={"email": "alice@example.com", "password": "x" * 129})
+
+    assert response.status_code == 422
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {},
+        {"email": "alice@example.com"},
+        {"password": "correct-horse"},
+    ],
+    ids=["empty", "missing-password", "missing-email"],
+)
+def test_register_rejects_missing_fields_with_422(client: TestClient, body: dict[str, str]) -> None:
+    response = client.post(REGISTER_URL, json=body)
+
+    assert response.status_code == 422
+
+
+def test_register_ignores_a_role_sent_by_the_client(client: TestClient) -> None:
+    response = client.post(
+        REGISTER_URL,
+        json={"email": "mallory@example.com", "password": "correct-horse", "role": "admin"},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["role"] == "user"
