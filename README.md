@@ -27,8 +27,15 @@ A full-stack inventory system for a car dealership, built test-first
 The behaviour the system implements, and the test list that drives it, is in
 [docs/SPEC.md](docs/SPEC.md).
 
-> Work in progress. Screenshots, the full feature tour and the "My AI Usage"
-> section will be added as the project is completed.
+## Screenshots
+
+| Dashboard                                                                                                      | Search, sort and shortlist                                                                                             |
+| -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| ![Dashboard with the hero, quick filters, filter sidebar and vehicle cards](docs/screenshots/02-dashboard.png) | ![Toyota brand filter as a removable chip, sorted by price, one vehicle shortlisted](docs/screenshots/03-filtered.png) |
+
+| Admin controls                                                                                   | Add vehicle                                                | Login                                        | Mobile                                                                  |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------- |
+| ![Admin view with Add vehicle and per-card Edit, Restock, Delete](docs/screenshots/04-admin.png) | ![Add vehicle dialog](docs/screenshots/05-add-vehicle.png) | ![Login page](docs/screenshots/01-login.png) | ![Mobile layout with collapsed filters](docs/screenshots/06-mobile.png) |
 
 ## Prerequisites
 
@@ -84,6 +91,32 @@ from the command line:
 cd backend
 uv run python -m app.cli create-admin --email admin@example.com   # prompts for a password
 ```
+
+## Testing
+
+Every behaviour in [docs/SPEC.md](docs/SPEC.md) was built test-first, and the
+commit history shows it: a `test:` commit that fails (its message says why),
+then a `feat:`/`fix:` commit that makes it pass, then `refactor:` commits
+where the code needed tidying. A few `test:` commits add tests for code that
+already existed; their messages say so.
+
+| Suite                                                       | What it covers                                                                                         | Tests     | Coverage |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | --------- | -------- |
+| Backend (pytest)                                            | API endpoints against a **real PostgreSQL** database, services, security, migrations, CLI, concurrency | 278       | 100%     |
+| Frontend (Vitest + Testing Library + MSW)                   | Every page and component through the user's eyes, against a mocked API                                 | 148       | 100%     |
+| End to end ([scripts/smoke-test.sh](scripts/smoke-test.sh)) | The Docker stack through nginx: auth, browse, search, purchase, restock                                | 12 checks | —        |
+
+```bash
+make test           # both suites
+make coverage       # with coverage reports
+make test-report    # regenerate docs/TEST_REPORT.md
+make stack-smoke    # end-to-end check of the containerised app
+```
+
+The latest report is in [docs/TEST_REPORT.md](docs/TEST_REPORT.md). CI
+([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs linting, type
+checks, migrations (up, down, up), both suites and the end-to-end smoke test on
+every push, and uploads JUnit and coverage reports as build artifacts.
 
 ## Configuration
 
@@ -178,7 +211,88 @@ backend/            FastAPI application
   tests/            pytest suite
 frontend/           React single-page application
 docs/SPEC.md        specification and test list
-scripts/            end-to-end smoke test of the running stack
+docs/screenshots/   screenshots used in this README
+docs/TEST_REPORT.md generated test report
+scripts/            end-to-end smoke test and test-report generator
 docker-compose.yml  PostgreSQL, API and web containers
 PROMPTS.md          raw log of the prompts given to the AI assistant
 ```
+
+## My AI Usage
+
+### Tools
+
+- **Claude Code** (Anthropic's coding agent, model Claude Opus 5.5) in the
+  VS Code extension, for nearly all of the implementation work: planning,
+  writing tests and code, running them, committing and pushing.
+- **Claude.ai** (deep research) before starting, to understand what the kata
+  asks for and to plan the approach.
+
+Every commit the AI contributed to carries a
+`Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` trailer.
+[PROMPTS.md](PROMPTS.md) holds every prompt I gave Claude Code, verbatim. A
+`UserPromptSubmit` hook ([.claude/hooks/log-prompt.sh](.claude/hooks/log-prompt.sh))
+appended each one automatically, so the log never depended on anyone
+remembering to update it. The full session transcripts are exported in
+[docs/transcripts/](docs/transcripts/).
+
+### How I used it
+
+- **Planning before code.** I asked for the directory structure, stack and a
+  phase plan first, and chose between the options it proposed (FastAPI +
+  PostgreSQL, TypeScript, public repo, prompt logging via a hook).
+- **One phase at a time.** I approved each phase, then let it move between
+  phases on its own while announcing every transition.
+- **Strict red → green → refactor.** Each slice started from the test list in
+  `docs/SPEC.md`: a failing test committed first (with the failure reason in
+  the message), then the implementation, then refactoring.
+- **Decisions stayed with me.** Admin-only create/update, the richer vehicle
+  data, browser-side shortlists, the navy and amber palette, the UI direction
+  (feature ideas from a used-car marketplace I found, without copying its
+  branding), Vercel deployment and keeping my research notes out of the
+  repository were my calls.
+- **Verification beyond unit tests.** Claude drove the running app in a
+  headless browser and looked at screenshots, and ran a containerised
+  end-to-end smoke test, which caught problems the unit tests could not.
+
+### Where the AI was wrong, and what caught it
+
+- **Outdated library knowledge.** It configured Mock Service Worker with the
+  v2 option `onUnhandledRequest`; MSW 3 renamed it to `onUnhandledFrame`. The
+  TypeScript compiler caught it; fixed in `4fae57b`.
+- **A CI tag that does not exist.** It bumped `astral-sh/setup-uv` to `@v10`,
+  which is not published; CI failed and it pinned `v10.3.2` (`edbcc34`).
+- **A test that tested nothing.** Its first route-access guard read FastAPI's
+  route list, which hides included routers in this version, so it checked
+  zero routes. The test's own "policy lists only routes that exist" assertion
+  exposed it; it was rewritten against the OpenAPI schema and mutation-checked
+  (`126b988`).
+- **Code before its test, once.** It wrote the dialog scroll lock before the
+  test; the change was backed out, the test committed red first (`cbc7604`),
+  then the fix re-applied (`a0e9334`).
+- **Visual bugs the tests could not see.** Screenshots showed a disabled
+  Purchase button that still looked clickable, a stray separator on wrapped
+  card details and misaligned card footers (`63c2708`, `46fc105`).
+- **Unsafe package suggestion blocked.** A framework warning pointed to an
+  unfamiliar package (`httpx2`); the install was blocked and the well-known
+  `httpx` kept (`41157f4`).
+- **The concurrency bug, on purpose.** The first purchase implementation was a
+  simple read-then-write; a test with 10 simultaneous buyers showed it selling
+  10 cars from a stock of 3 (`f73e324`), and the atomic update fixed it
+  (`00b17df`).
+- **My deployment config needed fixes.** The Vercel config I added pointed at
+  `main:app` instead of `app.main:app`, and hosted `postgres://` URLs would
+  have crashed the API (psycopg2 is not installed); both were fixed, the
+  second test-first (`563a636`, `051510b`).
+
+### Reflection
+
+AI made the mechanical parts fast: scaffolding, exhaustive edge-case tests,
+documentation and CI. That left my attention for the decisions that shape the
+product. The discipline mattered more than the speed. Committing every failing
+test first made it obvious when something was being skipped, and running the
+real app (a headless browser and a Docker smoke test) caught problems a green
+unit-test suite never would. The AI's mistakes were mostly confident uses of
+outdated APIs and checks that silently tested nothing, so the habit I take
+away is to make every test prove it can fail, and to trust the compiler, CI
+and the running app over the model's confidence.
