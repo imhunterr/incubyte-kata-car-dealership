@@ -31,6 +31,20 @@ class Settings(BaseSettings):
     # same-origin and needs no CORS.
     cors_origins: Annotated[list[str], NoDecode] = []
 
+    @field_validator("database_url")
+    @classmethod
+    def _use_the_psycopg_driver(cls, url: str) -> str:
+        """Point driver-less PostgreSQL URLs at psycopg 3.
+
+        Hosted databases (Neon, Supabase, Vercel Postgres, ...) usually give
+        ``postgres://`` or ``postgresql://`` URLs, which SQLAlchemy would open
+        with psycopg2. This app installs psycopg 3, so name it explicitly.
+        """
+        for prefix in ("postgres://", "postgresql://"):
+            if url.startswith(prefix):
+                return "postgresql+psycopg://" + url.removeprefix(prefix)
+        return url
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_comma_separated(cls, value: object) -> object:
