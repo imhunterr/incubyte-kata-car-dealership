@@ -67,25 +67,21 @@ export function useInventory() {
     applyLoad(await fetchVehicles(applied), applied)
   }
 
+  /** Change the loaded list; does nothing while loading or after an error. */
+  function updateLoaded(change: (vehicles: Vehicle[]) => Vehicle[]) {
+    setLoad((current) =>
+      current.status === 'loaded' ? { ...current, vehicles: change(current.vehicles) } : current,
+    )
+  }
+
   /** Replace one vehicle in the loaded list (e.g. with its new stock). */
   function replaceVehicle(updated: Vehicle) {
-    setLoad((current) =>
-      current.status === 'loaded'
-        ? {
-            ...current,
-            vehicles: current.vehicles.map((v) => (v.id === updated.id ? updated : v)),
-          }
-        : current,
-    )
+    updateLoaded((vehicles) => vehicles.map((v) => (v.id === updated.id ? updated : v)))
   }
 
   /** Show a newly created vehicle at the end of the list and in the brand shortcuts. */
   function addVehicle(vehicle: Vehicle) {
-    setLoad((current) =>
-      current.status === 'loaded'
-        ? { ...current, vehicles: [...current.vehicles, vehicle] }
-        : current,
-    )
+    updateLoaded((vehicles) => [...vehicles, vehicle])
     setBrands((current) =>
       current.includes(vehicle.make) ? current : [...current, vehicle.make].sort(),
     )
@@ -93,11 +89,7 @@ export function useInventory() {
 
   /** Drop a deleted vehicle from the list. */
   function removeVehicle(vehicleId: number) {
-    setLoad((current) =>
-      current.status === 'loaded'
-        ? { ...current, vehicles: current.vehicles.filter((v) => v.id !== vehicleId) }
-        : current,
-    )
+    updateLoaded((vehicles) => vehicles.filter((v) => v.id !== vehicleId))
   }
 
   return { load, filters, brands, applyFilters, replaceVehicle, addVehicle, removeVehicle }
