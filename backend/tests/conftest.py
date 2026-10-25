@@ -27,15 +27,13 @@ from app.db.base import Base
 from app.db.session import get_session
 from app.main import create_app
 from app.models.user import User
+from tests.helpers import DEFAULT_PASSWORD
 
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
     "postgresql+psycopg://dealership:dealership@localhost:5434/dealership_test",
 )
 BACKEND_DIR = Path(__file__).resolve().parent.parent
-
-DEFAULT_PASSWORD = "correct-horse"
-"""Password given to users made by the ``create_user`` fixture unless overridden."""
 
 
 @pytest.fixture(scope="session")

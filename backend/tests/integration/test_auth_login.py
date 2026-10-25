@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from app.core.roles import Role
 from app.core.security import decode_access_token
 from app.models.user import User
-from tests.conftest import DEFAULT_PASSWORD
+from tests.helpers import DEFAULT_PASSWORD
 
 LOGIN_URL = "/api/auth/login"
 INVALID_CREDENTIALS = "Invalid email or password"
