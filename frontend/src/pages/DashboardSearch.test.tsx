@@ -193,3 +193,26 @@ describe('DashboardPage: search and filters', () => {
     expect(screen.getByLabelText('Make')).toHaveValue('')
   })
 })
+
+describe('DashboardPage: filters on small screens', () => {
+  beforeEach(() => {
+    server.use(http.get('*/api/vehicles', () => HttpResponse.json(inventory)))
+  })
+
+  it('has a button that shows and hides the filter panel', async () => {
+    const { user } = await renderLoadedDashboard()
+    const toggle = screen.getByRole('button', { name: 'Show filters' })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(toggle).toHaveAttribute(
+      'aria-controls',
+      screen.getByRole('search', { name: 'Filter vehicles' }).id,
+    )
+
+    await user.click(toggle)
+
+    expect(screen.getByRole('button', { name: 'Hide filters' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    )
+  })
+})
