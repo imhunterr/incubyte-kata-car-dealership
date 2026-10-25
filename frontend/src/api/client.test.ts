@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 
 import { server } from '../test/server'
-import { ApiError, apiRequest } from './client'
+import { ApiError, apiRequest, messageFor } from './client'
 
 describe('apiRequest', () => {
   it('sends a JSON body and returns the parsed JSON response', async () => {
@@ -133,5 +133,17 @@ describe('apiRequest', () => {
       status: 0,
       message: 'Could not reach the server. Check your connection.',
     })
+  })
+})
+
+describe('messageFor', () => {
+  it('uses the message of an ApiError', () => {
+    expect(messageFor(new ApiError(409, 'Vehicle is out of stock'))).toBe('Vehicle is out of stock')
+  })
+
+  it('falls back to a generic message for anything else', () => {
+    expect(messageFor(new TypeError('x is undefined'))).toBe(
+      'Something went wrong. Please try again.',
+    )
   })
 })

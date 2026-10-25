@@ -58,6 +58,14 @@ describe('AuthProvider / useAuth', () => {
     expect(result.current.user).toBeNull()
   })
 
+  it('ignores a stored session with the wrong shape', () => {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ token: 42, user: null }))
+
+    const { result } = renderAuth()
+
+    expect(result.current.user).toBeNull()
+  })
+
   it('stays logged out and rethrows when login fails', async () => {
     server.use(
       http.post('*/api/auth/login', () =>
