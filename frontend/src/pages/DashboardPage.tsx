@@ -17,7 +17,9 @@ import { ActiveFilters } from '../components/ActiveFilters'
 import { QuickFilters } from '../components/QuickFilters'
 import { SearchPanel } from '../components/SearchPanel'
 import { VehicleCard } from '../components/VehicleCard'
+import { SelectField } from '../components/SelectField'
 import { compactFilters } from '../lib/filters'
+import { SORT_OPTIONS, sortVehicles, type SortOrder } from '../lib/sorting'
 
 type LoadState =
   | { status: 'loading' }
@@ -32,6 +34,7 @@ export function DashboardPage() {
   const [actionError, setActionError] = useState<string | null>(null)
   /** The filters behind the current list; empty means "whole inventory". */
   const [filters, setFilters] = useState<VehicleSearch>({})
+  const [sortOrder, setSortOrder] = useState<SortOrder>('recommended')
   /** Makes in the whole inventory, for the brand shortcuts. */
   const [brands, setBrands] = useState<string[]>([])
 
@@ -139,13 +142,27 @@ export function DashboardPage() {
         </aside>
 
         <div>
-          <div className="flex flex-wrap items-end justify-between gap-2">
-            <h2 className="text-2xl font-bold tracking-tight">Vehicles</h2>
-            {load.status === 'loaded' && (
-              <p className="text-sm text-slate-600">
-                {load.vehicles.length} {load.vehicles.length === 1 ? 'vehicle' : 'vehicles'}
-              </p>
-            )}
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">Vehicles</h2>
+              {load.status === 'loaded' && (
+                <p className="text-sm text-slate-600">
+                  {load.vehicles.length} {load.vehicles.length === 1 ? 'vehicle' : 'vehicles'}
+                </p>
+              )}
+            </div>
+            <SelectField
+              label="Sort by"
+              value={sortOrder}
+              onChange={(event) => setSortOrder(event.target.value as SortOrder)}
+              className="w-52"
+            >
+              {SORT_OPTIONS.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </SelectField>
           </div>
 
           <ActiveFilters
@@ -183,8 +200,8 @@ export function DashboardPage() {
             )}
 
             {load.status === 'loaded' && load.vehicles.length > 0 && (
-              <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                {load.vehicles.map((vehicle) => (
+              <ul aria-label="Search results" className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {sortVehicles(load.vehicles, sortOrder).map((vehicle) => (
                   <VehicleCard
                     key={vehicle.id}
                     vehicle={vehicle}
