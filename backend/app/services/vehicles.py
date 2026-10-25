@@ -26,6 +26,17 @@ class VehicleService:
         """Add a vehicle to the inventory and return it."""
         return self._vehicles.add(Vehicle(**data.model_dump()))
 
+    def seed_if_empty(self, vehicles: Sequence[VehicleWrite]) -> int:
+        """Add ``vehicles`` only if the inventory is empty.
+
+        Never touches an inventory that already has data, so it is safe to run
+        repeatedly. Returns the number of vehicles added (0 if none).
+        """
+        if not self._vehicles.is_empty():
+            return 0
+        self._vehicles.add_all([Vehicle(**vehicle.model_dump()) for vehicle in vehicles])
+        return len(vehicles)
+
     def update(self, vehicle_id: int, data: VehicleWrite) -> Vehicle:
         """Replace every editable field of a vehicle and return it.
 

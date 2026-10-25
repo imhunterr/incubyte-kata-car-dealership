@@ -48,6 +48,15 @@ class VehicleRepository:
         query = select(Vehicle).where(*conditions).order_by(Vehicle.id)
         return self._session.scalars(query).all()
 
+    def is_empty(self) -> bool:
+        """Return ``True`` if the inventory has no vehicles at all."""
+        return self._session.scalars(select(Vehicle.id).limit(1)).first() is None
+
+    def add_all(self, vehicles: Sequence[Vehicle]) -> None:
+        """Persist several new vehicles in one transaction."""
+        self._session.add_all(vehicles)
+        self._session.commit()
+
     def get(self, vehicle_id: int) -> Vehicle | None:
         """Return the vehicle with this id, if any."""
         return self._session.get(Vehicle, vehicle_id)
