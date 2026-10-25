@@ -1,5 +1,6 @@
 """Request and response bodies for the vehicle endpoints."""
 
+from datetime import date
 from decimal import Decimal
 from typing import Annotated
 
@@ -12,7 +13,7 @@ from pydantic import (
     model_validator,
 )
 
-from app.core.categories import VehicleCategory
+from app.core.categories import FuelType, Transmission, VehicleCategory
 
 VehicleName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50)]
 """A make or model name: trimmed, then 1-50 characters (so blank is invalid)."""
@@ -22,6 +23,21 @@ Price = Annotated[Decimal, Field(gt=0, max_digits=10, decimal_places=2)]
 
 StockQuantity = Annotated[int, Field(ge=0, strict=True)]
 """Units in stock. Strict: ``"3"``, ``3.0`` and ``true`` are rejected, not coerced."""
+
+
+OLDEST_MODEL_YEAR = 1990
+MAX_MILEAGE_KM = 1_000_000
+
+ModelYear = Annotated[int, Field(strict=True, ge=OLDEST_MODEL_YEAR)]
+"""A model year from 1990; the upper bound (next year) is checked at runtime."""
+
+Mileage = Annotated[int, Field(strict=True, ge=0, le=MAX_MILEAGE_KM)]
+"""Kilometres driven, as a strict integer from 0 to 1,000,000."""
+
+
+def latest_model_year() -> int:
+    """Newest acceptable model year: manufacturers sell next year's models early."""
+    return date.today().year + 1
 
 
 class VehicleWrite(BaseModel):
@@ -35,6 +51,17 @@ class VehicleWrite(BaseModel):
     category: VehicleCategory
     price: Price
     quantity: StockQuantity
+    year: ModelYear
+    fuel_type: FuelType
+    transmission: Transmission
+    mileage_km: Mileage
+
+    @field_validator("year")
+    @classmethod
+    def _year_is_not_in_the_future(cls, year: int) -> int:
+        if year > latest_model_year():
+            raise ValueError(f"year must not be later than {latest_model_year()}")
+        return year
 
 
 MAX_RESTOCK_QUANTITY = 10_000
@@ -60,6 +87,10 @@ class VehicleRead(BaseModel):
     category: VehicleCategory
     price: Decimal
     quantity: int
+    year: int
+    fuel_type: FuelType
+    transmission: Transmission
+    mileage_km: int
 
 
 class VehicleSearch(BaseModel):

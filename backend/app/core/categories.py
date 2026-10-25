@@ -1,4 +1,4 @@
-"""Vehicle body categories offered by the dealership."""
+"""Enumerations that describe a vehicle."""
 
 from enum import StrEnum
 
@@ -14,3 +14,20 @@ class VehicleCategory(StrEnum):
     TRUCK = "truck"
     VAN = "van"
     WAGON = "wagon"
+
+
+class FuelType(StrEnum):
+    """What powers the vehicle."""
+
+    PETROL = "petrol"
+    DIESEL = "diesel"
+    CNG = "cng"
+    ELECTRIC = "electric"
+    HYBRID = "hybrid"
+
+
+class Transmission(StrEnum):
+    """Gearbox type."""
+
+    MANUAL = "manual"
+    AUTOMATIC = "automatic"
