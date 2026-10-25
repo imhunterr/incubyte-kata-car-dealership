@@ -40,6 +40,10 @@ branch = true
 
 [tool.coverage.report]
 show_missing = true
+exclude_also = [
+    # Script entry points are exercised by calling main() directly.
+    'if __name__ == "__main__":',
+]
 
 [tool.ruff]
 line-length = 100

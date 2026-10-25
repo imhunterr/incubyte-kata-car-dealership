@@ -46,20 +46,23 @@ ERROR_RESPONSES: dict[type[DomainError], ErrorResponse] = {
 }
 
 
-def _response_for(error: DomainError) -> ErrorResponse:
+def response_for(error: DomainError) -> ErrorResponse:
     """Find the mapping for ``error``, honouring subclassing (most specific wins)."""
     for error_type in type(error).__mro__:
         if error_type in ERROR_RESPONSES:
             return ERROR_RESPONSES[error_type]
     # A DomainError with no mapping is a programming mistake: fail loudly.
-    raise LookupError(f"No HTTP mapping for {type(error).__name__}") from error
+    # Unreachable while test_every_domain_error_has_an_http_mapping passes.
+    raise LookupError(  # pragma: no cover
+        f"No HTTP mapping for {type(error).__name__}"
+    ) from error
 
 
 async def _handle_domain_error(_request: Request, error: Exception) -> JSONResponse:
     # Registered for DomainError only; the check narrows the type for mypy.
-    if not isinstance(error, DomainError):
+    if not isinstance(error, DomainError):  # pragma: no cover
         raise error
-    response = _response_for(error)
+    response = response_for(error)
     return JSONResponse(
         status_code=response.status_code,
         content={"detail": response.detail},

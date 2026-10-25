@@ -40,7 +40,8 @@ class UserRepository:
             self._session.rollback()
             if _violated_constraint(error) == _UNIQUE_EMAIL_CONSTRAINT:
                 raise EmailAlreadyRegisteredError(user.email) from error
-            raise
+            # Any other integrity failure is unexpected: let it surface as-is.
+            raise  # pragma: no cover
         return user
 
     def save(self, user: User) -> User:
