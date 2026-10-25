@@ -91,5 +91,14 @@ export function useInventory() {
     )
   }
 
-  return { load, filters, brands, applyFilters, replaceVehicle, addVehicle }
+  /** Drop a deleted vehicle from the list. */
+  function removeVehicle(vehicleId: number) {
+    setLoad((current) =>
+      current.status === 'loaded'
+        ? { ...current, vehicles: current.vehicles.filter((v) => v.id !== vehicleId) }
+        : current,
+    )
+  }
+
+  return { load, filters, brands, applyFilters, replaceVehicle, addVehicle, removeVehicle }
 }

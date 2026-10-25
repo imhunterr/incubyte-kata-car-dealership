@@ -37,3 +37,7 @@ export function updateVehicle(
 ): Promise<Vehicle> {
   return request<Vehicle>(`/vehicles/${id}`, { method: 'PUT', body: input })
 }
+
+export function deleteVehicle(request: AuthRequest, id: number): Promise<void> {
+  return request<void>(`/vehicles/${id}`, { method: 'DELETE' })
+}

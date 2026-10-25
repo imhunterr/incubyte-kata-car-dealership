@@ -9,11 +9,18 @@ import { useId, useState } from 'react'
 
 import { ApiError, messageFor } from '../api/client'
 import type { Vehicle, VehicleInput } from '../api/types'
-import { createVehicle, hasFilters, purchaseVehicle, updateVehicle } from '../api/vehicles'
+import {
+  createVehicle,
+  deleteVehicle,
+  hasFilters,
+  purchaseVehicle,
+  updateVehicle,
+} from '../api/vehicles'
 import { useAuth } from '../auth/useAuth'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { ActiveFilters } from '../components/ActiveFilters'
+import { ConfirmAction } from '../components/ConfirmAction'
 import { DashboardHero } from '../components/DashboardHero'
 import { Modal } from '../components/Modal'
 import { SearchPanel } from '../components/SearchPanel'
@@ -26,14 +33,16 @@ import { useShortlist } from '../hooks/useShortlist'
 import { SORT_OPTIONS, sortVehicles, type SortOrder } from '../lib/sorting'
 
 /** Which admin dialog is open, and for which vehicle. */
-type AdminDialog = { kind: 'add' } | { kind: 'edit'; vehicle: Vehicle }
+type AdminDialog =
+  { kind: 'add' } | { kind: 'edit'; vehicle: Vehicle } | { kind: 'delete'; vehicle: Vehicle }
 
 export function DashboardPage() {
   const { request, user, isAdmin } = useAuth()
   // The dashboard is only rendered for logged-in users.
   const shortlist = useShortlist(user!.id)
   const [showShortlistOnly, setShowShortlistOnly] = useState(false)
-  const { load, filters, brands, applyFilters, replaceVehicle, addVehicle } = useInventory()
+  const { load, filters, brands, applyFilters, replaceVehicle, addVehicle, removeVehicle } =
+    useInventory()
   const [purchasingId, setPurchasingId] = useState<number | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -80,11 +89,19 @@ export function DashboardPage() {
     setNotice(`Saved ${saved.make} ${saved.model}.`)
   }
 
-  // Restock and Delete are wired up to dialogs in the following steps.
+  async function handleDelete(vehicle: Vehicle) {
+    await deleteVehicle(request, vehicle.id)
+    removeVehicle(vehicle.id)
+    setDialog(null)
+    setActionError(null)
+    setNotice(`Deleted ${vehicle.make} ${vehicle.model}.`)
+  }
+
+  // Restock is wired up to a dialog in the next step.
   const adminActions: AdminActions = {
     onEdit: (vehicle) => setDialog({ kind: 'edit', vehicle }),
     onRestock: () => undefined,
-    onDelete: () => undefined,
+    onDelete: (vehicle) => setDialog({ kind: 'delete', vehicle }),
   }
 
   const loadedVehicles = load.status === 'loaded' ? load.vehicles : []
@@ -236,6 +253,22 @@ export function DashboardPage() {
             onSubmit={(input) => handleUpdate(dialog.vehicle, input)}
             onCancel={closeDialog}
           />
+        </Modal>
+      )}
+      {dialog?.kind === 'delete' && (
+        <Modal
+          title={`Delete ${dialog.vehicle.make} ${dialog.vehicle.model}?`}
+          onClose={closeDialog}
+        >
+          <ConfirmAction
+            confirmLabel="Delete vehicle"
+            busyLabel="Deleting…"
+            onConfirm={() => handleDelete(dialog.vehicle)}
+            onCancel={closeDialog}
+          >
+            This removes it from the inventory permanently. To stop selling it for a while, edit its
+            stock to 0 instead.
+          </ConfirmAction>
         </Modal>
       )}
     </section>
