@@ -16,6 +16,7 @@ from app.core.errors import (
     EmailAlreadyRegisteredError,
     InvalidCredentialsError,
     NotAuthenticatedError,
+    OutOfStockError,
     VehicleNotFoundError,
 )
 
@@ -45,6 +46,7 @@ ERROR_RESPONSES: dict[type[DomainError], ErrorResponse] = {
     ),
     AdminRequiredError: ErrorResponse(status.HTTP_403_FORBIDDEN, "Admin privileges required"),
     VehicleNotFoundError: ErrorResponse(status.HTTP_404_NOT_FOUND, "Vehicle not found"),
+    OutOfStockError: ErrorResponse(status.HTTP_409_CONFLICT, "Vehicle is out of stock"),
 }
 
 

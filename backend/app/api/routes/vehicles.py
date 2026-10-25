@@ -23,6 +23,9 @@ _AUTH_ERRORS: dict[int | str, dict[str, Any]] = _UNAUTHENTICATED | {
 _NOT_FOUND: dict[int | str, dict[str, Any]] = {
     status.HTTP_404_NOT_FOUND: {"description": "Vehicle not found"},
 }
+_OUT_OF_STOCK: dict[int | str, dict[str, Any]] = {
+    status.HTTP_409_CONFLICT: {"description": "Vehicle is out of stock"},
+}
 
 
 @router.get(
@@ -71,3 +74,11 @@ def update_vehicle(
 def delete_vehicle(vehicle_id: int, vehicles: VehicleServiceDep, _admin: AdminUserDep) -> None:
     """Remove a vehicle from the inventory (admin only)."""
     vehicles.delete(vehicle_id)
+
+
+@router.post("/{vehicle_id}/purchase", responses=_UNAUTHENTICATED | _NOT_FOUND | _OUT_OF_STOCK)
+def purchase_vehicle(
+    vehicle_id: int, vehicles: VehicleServiceDep, _user: CurrentUserDep
+) -> VehicleRead:
+    """Buy one unit of a vehicle, decreasing its stock by one."""
+    return VehicleRead.model_validate(vehicles.purchase(vehicle_id))

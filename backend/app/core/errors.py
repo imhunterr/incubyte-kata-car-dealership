@@ -30,3 +30,7 @@ class AdminRequiredError(DomainError):
 
 class VehicleNotFoundError(DomainError):
     """No vehicle exists with the requested id."""
+
+
+class OutOfStockError(DomainError):
+    """The vehicle exists but has no units left to sell."""

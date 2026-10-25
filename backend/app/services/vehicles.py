@@ -2,7 +2,7 @@
 
 from collections.abc import Sequence
 
-from app.core.errors import VehicleNotFoundError
+from app.core.errors import OutOfStockError, VehicleNotFoundError
 from app.models.vehicle import Vehicle
 from app.repositories.vehicles import VehicleRepository
 from app.schemas.vehicles import VehicleSearch, VehicleWrite
@@ -44,6 +44,19 @@ class VehicleService:
             VehicleNotFoundError: If no vehicle has this id.
         """
         self._vehicles.delete(self._get_or_raise(vehicle_id))
+
+    def purchase(self, vehicle_id: int) -> Vehicle:
+        """Sell one unit of a vehicle and return it with the reduced stock.
+
+        Raises:
+            VehicleNotFoundError: If no vehicle has this id.
+            OutOfStockError: If the vehicle has no units left.
+        """
+        vehicle = self._get_or_raise(vehicle_id)
+        if vehicle.quantity == 0:
+            raise OutOfStockError(vehicle_id)
+        vehicle.quantity -= 1
+        return self._vehicles.save(vehicle)
 
     def _get_or_raise(self, vehicle_id: int) -> Vehicle:
         vehicle = self._vehicles.get(vehicle_id)
