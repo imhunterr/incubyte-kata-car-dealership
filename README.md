@@ -36,7 +36,21 @@ The behaviour the system implements, and the test list that drives it, is in
 - Node.js 24+ and npm
 - Docker with Docker Compose
 
-## Quick start
+## Run it with Docker (quickest)
+
+Requires only Docker:
+
+```bash
+docker compose up -d --build --wait          # web + API + PostgreSQL
+docker compose exec api python -m app.cli create-admin --email admin@example.com
+docker compose exec api python -m app.cli seed-demo   # optional sample inventory
+```
+
+Open http://localhost:8080 (change the port with `WEB_PORT`). The API
+container applies database migrations on start. `make stack-smoke` does all of
+the above and runs an end-to-end smoke test; `make stack-down` stops it.
+
+## Quick start (development)
 
 ```bash
 make install    # backend (uv sync) + frontend (npm ci) dependencies
@@ -84,6 +98,7 @@ The backend reads its settings from environment variables or `backend/.env`
 | `JWT_SECRET_KEY`              | Signs access tokens. **Set a strong value outside local development.**            |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token lifetime (default `60`).                                             |
 | `CORS_ORIGINS`                | Extra browser origins allowed to call the API, comma-separated (none by default). |
+| `WEB_PORT`                    | Host port for the containerised web app (`8080`).                                 |
 | `DB_PORT`                     | Host port for the compose PostgreSQL (`5434`).                                    |
 | `VITE_API_PROXY`              | API URL the Vite dev server proxies `/api` to.                                    |
 
@@ -163,5 +178,7 @@ backend/            FastAPI application
   tests/            pytest suite
 frontend/           React single-page application
 docs/SPEC.md        specification and test list
+scripts/            end-to-end smoke test of the running stack
+docker-compose.yml  PostgreSQL, API and web containers
 PROMPTS.md          raw log of the prompts given to the AI assistant
 ```
