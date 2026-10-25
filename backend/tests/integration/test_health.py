@@ -2,6 +2,7 @@
 
 from collections.abc import Iterator
 
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -25,12 +26,12 @@ def test_health_reports_database_reachable(client: TestClient) -> None:
     assert response.json()["database"] == "ok"
 
 
-def test_health_returns_503_when_database_is_unreachable(client: TestClient) -> None:
+def test_health_returns_503_when_database_is_unreachable(app: FastAPI, client: TestClient) -> None:
     def get_unreachable_session() -> Iterator[Session]:
         with Session(bind=create_engine(UNREACHABLE_DATABASE_URL)) as session:
             yield session
 
-    client.app.dependency_overrides[get_session] = get_unreachable_session  # type: ignore[attr-defined]
+    app.dependency_overrides[get_session] = get_unreachable_session
 
     response = client.get("/api/health")
 

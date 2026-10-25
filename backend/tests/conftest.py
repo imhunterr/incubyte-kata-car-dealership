@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
@@ -66,14 +67,23 @@ def db_session(session_factory: sessionmaker[Session]) -> Iterator[Session]:
 
 
 @pytest.fixture
-def client(session_factory: sessionmaker[Session]) -> Iterator[TestClient]:
-    """An HTTP client for a fresh app instance wired to the test database."""
+def app(session_factory: sessionmaker[Session]) -> FastAPI:
+    """A fresh application instance whose sessions use the test database.
+
+    Tests may add further entries to ``app.dependency_overrides``.
+    """
 
     def get_test_session() -> Iterator[Session]:
         with session_factory() as session:
             yield session
 
-    app = create_app()
-    app.dependency_overrides[get_session] = get_test_session
+    application = create_app()
+    application.dependency_overrides[get_session] = get_test_session
+    return application
+
+
+@pytest.fixture
+def client(app: FastAPI) -> Iterator[TestClient]:
+    """An HTTP client for the test application."""
     with TestClient(app) as test_client:
         yield test_client
