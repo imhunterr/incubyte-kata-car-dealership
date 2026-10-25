@@ -1,6 +1,8 @@
 """Registration and authentication use cases."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
+from enum import StrEnum
 
 from app.core.errors import InvalidCredentialsError, NotAuthenticatedError
 from app.core.roles import Role
@@ -27,6 +29,14 @@ class LoginResult:
     user: User
 
 
+class AdminOutcome(StrEnum):
+    """What :meth:`AuthService.ensure_admin` did."""
+
+    CREATED = "created"
+    PROMOTED = "promoted"
+    ALREADY_ADMIN = "already_admin"
+
+
 class AuthService:
     """Creates accounts and verifies credentials."""
 
@@ -48,6 +58,37 @@ class AuthService:
             role=Role.USER,
         )
         return self._users.add(user)
+
+    def ensure_admin(self, email: str, password_provider: Callable[[], str]) -> AdminOutcome:
+        """Make sure an admin account exists for ``email``.
+
+        - No account yet: create one with the admin role. Only in this case is
+          ``password_provider`` called, so a password is never asked for (or
+          changed) when an existing user is promoted.
+        - Existing regular user: promote to admin, keeping their password.
+        - Existing admin: nothing to do.
+
+        Exceptions raised by ``password_provider`` (e.g. a validation error)
+        propagate before anything is written.
+        """
+        normalized_email = normalize_email(email)
+        user = self._users.get_by_email(normalized_email)
+
+        if user is None:
+            admin = User(
+                email=normalized_email,
+                password_hash=hash_password(password_provider()),
+                role=Role.ADMIN,
+            )
+            self._users.add(admin)
+            return AdminOutcome.CREATED
+
+        if user.role is Role.ADMIN:
+            return AdminOutcome.ALREADY_ADMIN
+
+        user.role = Role.ADMIN
+        self._users.save(user)
+        return AdminOutcome.PROMOTED
 
     def login(self, email: str, password: str) -> LoginResult:
         """Check credentials and issue an access token.

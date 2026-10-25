@@ -43,6 +43,11 @@ class UserRepository:
             raise
         return user
 
+    def save(self, user: User) -> User:
+        """Commit changes made to an already-persisted user."""
+        self._session.commit()
+        return user
+
 
 def _violated_constraint(error: IntegrityError) -> str | None:
     """Return the name of the constraint behind an integrity error, if known."""
