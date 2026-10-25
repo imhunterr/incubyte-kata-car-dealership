@@ -1,10 +1,12 @@
 # Developer shortcuts. Run `make help` to list them.
 #
-# The backend runs on the host via uv; PostgreSQL runs in docker compose.
+# Day to day, the backend runs on the host via uv and PostgreSQL in docker
+# compose. `make stack-up` runs the whole app (web + API + DB) in containers.
 
 .DEFAULT_GOAL := help
 .PHONY: help install db-up db-down migrate migrations-check seed dev-api dev-web \
-        test test-backend test-frontend coverage lint format
+        test test-backend test-frontend coverage lint format \
+        stack-up stack-down stack-smoke
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | \
@@ -60,3 +62,19 @@ lint: ## Lint, format-check and type-check both apps
 format: ## Auto-format both apps
 	cd backend && uv run ruff check --fix . && uv run ruff format .
 	cd frontend && npm run format
+
+SMOKE_ADMIN_EMAIL ?= admin@example.com
+SMOKE_ADMIN_PASSWORD ?= admin-pass-123
+
+stack-up: ## Build and start the whole app in containers on http://localhost:8080
+	docker compose up -d --build --wait
+
+stack-down: ## Stop the containerised app (data is kept)
+	docker compose down
+
+stack-smoke: stack-up ## Start the stack, prepare an admin and demo data, run the smoke test
+	docker compose exec -T api python -m app.cli create-admin \
+		--email $(SMOKE_ADMIN_EMAIL) --password $(SMOKE_ADMIN_PASSWORD)
+	docker compose exec -T api python -m app.cli seed-demo
+	SMOKE_ADMIN_EMAIL=$(SMOKE_ADMIN_EMAIL) SMOKE_ADMIN_PASSWORD=$(SMOKE_ADMIN_PASSWORD) \
+		scripts/smoke-test.sh http://localhost:$${WEB_PORT:-8080}

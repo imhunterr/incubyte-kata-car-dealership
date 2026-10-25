@@ -1,5 +1,6 @@
-# Local development stack.
-#   docker compose up -d db    -> PostgreSQL only (for running the API/tests on the host)
+# Local stack.
+#   docker compose up -d --build --wait   -> whole app on http://localhost:8080
+#   docker compose up -d --wait db        -> PostgreSQL only (to run the API/tests on the host)
 #
 # Host ports are configurable so the stack can coexist with other local services.
 name: car-dealership
@@ -22,6 +23,33 @@ services:
       interval: 2s
       timeout: 3s
       retries: 15
+
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://dealership:dealership@db:5432/dealership
+      # Local default only; set JWT_SECRET_KEY in the environment for anything shared.
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-local-docker-only-insecure-jwt-secret-key}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  web:
+    build: ./frontend
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   db-data:
