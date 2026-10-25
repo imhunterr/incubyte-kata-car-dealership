@@ -7,10 +7,16 @@ import { customer } from '../test/fixtures'
 import { renderApp } from '../test/render'
 import { server } from '../test/server'
 
-async function fillForm(
-  user: UserEvent,
-  { email = 'customer@example.com', password = 'correct-horse', confirm = password } = {},
-) {
+interface FormValues {
+  email?: string
+  password?: string
+  /** Defaults to the password, i.e. a matching confirmation. */
+  confirm?: string
+}
+
+async function fillForm(user: UserEvent, values: FormValues = {}) {
+  const { email = 'customer@example.com', password = 'correct-horse' } = values
+  const confirm = values.confirm ?? password
   if (email) await user.type(screen.getByLabelText('Email'), email)
   if (password) await user.type(screen.getByLabelText('Password'), password)
   if (confirm) await user.type(screen.getByLabelText('Confirm password'), confirm)
