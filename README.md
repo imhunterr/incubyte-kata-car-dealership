@@ -20,7 +20,8 @@ A full-stack inventory system for a car dealership, built test-first
 - **Shortlist** vehicles to compare later (saved per user in the browser).
 - **Purchase** in one click; the button is disabled when a vehicle is sold
   out, and stock can never be oversold, even under concurrent purchases.
-- **Admin:** add, edit, delete and restock vehicles (API; admin UI in progress).
+- **Admin:** add, edit, delete (with confirmation) and restock vehicles from
+  accessible dialogs; the API enforces the same admin-only rules.
 - **Responsive** navy-and-amber design with accessible labels throughout.
 
 The behaviour the system implements, and the test list that drives it, is in

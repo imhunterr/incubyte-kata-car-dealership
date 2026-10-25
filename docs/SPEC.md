@@ -292,8 +292,11 @@ Restock (admin)
 - [x] On small screens the filter panel is collapsed behind "Show filters".
 - [x] Shortlist: save/unsave from a card, persisted per user, and a
       "Shortlisted" view.
-- [ ] Admin controls hidden for regular users, shown for admins.
-- [ ] Admin can add, edit, delete and restock vehicles through forms.
+- [x] Admin controls hidden for regular users, shown for admins.
+- [x] Admin can add, edit, delete and restock vehicles through forms.
+- [x] Admin forms validate like the API and show API errors in the dialog;
+      deleting asks for confirmation; dialogs are accessible (focus, Escape,
+      no background scroll).
 - [x] A 401 from any API call logs the user out.
 - [x] Register form: confirmation must match; the new user is logged in straight away.
 - [x] Logged-in users are kept off the login/register pages; the header shows
