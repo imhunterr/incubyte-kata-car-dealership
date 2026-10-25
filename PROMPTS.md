@@ -63,3 +63,20 @@ Yes continue with Phase 3 and in fact you can continue between phases without as
 ## Prompt 7 — 2026-10-25 21:45:24 IST
 
 I was looking for some front-end inspirations online and i came across spinny.com which is a dealership for used cars. The website design looks simple and it does have all the required features, so maybe we can build something similar. we can definitely use a better color pallete and design but the features offered should be similar/better that what it has. Lmk if you can check the website and implement something similar.
+
+---
+
+## Prompt 8 — 2026-10-25 21:54:59 IST
+
+<ide_opened_file>The user opened the file /home/hunter/Documents/incubyte-kata-car-dealership/vercel.json in the IDE. This may or may not be related to the current task.</ide_opened_file>
+I have added a vercel.json as im pushing to vercel and commit 
+
+<pasted_content id="8a50">
+Things to adjust:
+
+main:app: change this to wherever your FastAPI app lives (e.g. app.main:app if it’s in backend/app/main.py).
+API routes: in Vercel’s official Vite + FastAPI example, the FastAPI routes include the full prefix, so your backend routes should start with /api/.... 
+vercel
+Frontend calls: use relative URLs like fetch("/api/cars") instead of localhost:8000.
+Env vars: add things like DATABASE_URL or SECRET_KEY under Environment Variables on this screen.
+</pasted_content id="8a50">
