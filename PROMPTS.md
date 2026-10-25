@@ -37,3 +37,9 @@ Regarding the decisions-
 1. Yes admin only is fine.
 
 Since we are at it, can you lay out how many phases are we targetting and what they will be? Once that is in place, i will give you th egreenlight to move forward.
+
+---
+
+## Prompt 4 — 2026-10-25 20:52:36 IST
+
+The phases look good. Yes you can get started.
