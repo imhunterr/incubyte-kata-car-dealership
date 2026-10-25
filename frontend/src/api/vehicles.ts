@@ -41,3 +41,8 @@ export function updateVehicle(
 export function deleteVehicle(request: AuthRequest, id: number): Promise<void> {
   return request<void>(`/vehicles/${id}`, { method: 'DELETE' })
 }
+
+/** Add `units` (1 to 10,000) to a vehicle's stock. */
+export function restockVehicle(request: AuthRequest, id: number, units: number): Promise<Vehicle> {
+  return request<Vehicle>(`/vehicles/${id}/restock`, { method: 'POST', body: { quantity: units } })
+}

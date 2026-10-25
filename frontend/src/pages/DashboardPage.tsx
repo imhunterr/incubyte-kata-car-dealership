@@ -14,6 +14,7 @@ import {
   deleteVehicle,
   hasFilters,
   purchaseVehicle,
+  restockVehicle,
   updateVehicle,
 } from '../api/vehicles'
 import { useAuth } from '../auth/useAuth'
@@ -23,6 +24,7 @@ import { ActiveFilters } from '../components/ActiveFilters'
 import { ConfirmAction } from '../components/ConfirmAction'
 import { DashboardHero } from '../components/DashboardHero'
 import { Modal } from '../components/Modal'
+import { RestockForm } from '../components/RestockForm'
 import { SearchPanel } from '../components/SearchPanel'
 import { VehicleCard, type AdminActions } from '../components/VehicleCard'
 import { VehicleForm } from '../components/VehicleForm'
@@ -34,7 +36,10 @@ import { SORT_OPTIONS, sortVehicles, type SortOrder } from '../lib/sorting'
 
 /** Which admin dialog is open, and for which vehicle. */
 type AdminDialog =
-  { kind: 'add' } | { kind: 'edit'; vehicle: Vehicle } | { kind: 'delete'; vehicle: Vehicle }
+  | { kind: 'add' }
+  | { kind: 'edit'; vehicle: Vehicle }
+  | { kind: 'delete'; vehicle: Vehicle }
+  | { kind: 'restock'; vehicle: Vehicle }
 
 export function DashboardPage() {
   const { request, user, isAdmin } = useAuth()
@@ -97,10 +102,17 @@ export function DashboardPage() {
     setNotice(`Deleted ${vehicle.make} ${vehicle.model}.`)
   }
 
-  // Restock is wired up to a dialog in the next step.
+  async function handleRestock(vehicle: Vehicle, units: number) {
+    const restocked = await restockVehicle(request, vehicle.id, units)
+    replaceVehicle(restocked)
+    setDialog(null)
+    setActionError(null)
+    setNotice(`${restocked.make} ${restocked.model} now has ${restocked.quantity} in stock.`)
+  }
+
   const adminActions: AdminActions = {
     onEdit: (vehicle) => setDialog({ kind: 'edit', vehicle }),
-    onRestock: () => undefined,
+    onRestock: (vehicle) => setDialog({ kind: 'restock', vehicle }),
     onDelete: (vehicle) => setDialog({ kind: 'delete', vehicle }),
   }
 
@@ -269,6 +281,18 @@ export function DashboardPage() {
             This removes it from the inventory permanently. To stop selling it for a while, edit its
             stock to 0 instead.
           </ConfirmAction>
+        </Modal>
+      )}
+      {dialog?.kind === 'restock' && (
+        <Modal
+          title={`Restock ${dialog.vehicle.make} ${dialog.vehicle.model}`}
+          onClose={closeDialog}
+        >
+          <RestockForm
+            vehicle={dialog.vehicle}
+            onSubmit={(units) => handleRestock(dialog.vehicle, units)}
+            onCancel={closeDialog}
+          />
         </Modal>
       )}
     </section>
