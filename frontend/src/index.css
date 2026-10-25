@@ -1,1 +1,23 @@
 @import 'tailwindcss';
+
+/*
+ * Brand palette: deep navy for structure and text, warm amber for actions.
+ * Neutrals use Tailwind's built-in `slate`.
+ */
+@theme {
+  --color-navy-50: #f3f6fb;
+  --color-navy-100: #e3eaf5;
+  --color-navy-200: #c5d3e8;
+  --color-navy-300: #9bb2d4;
+  --color-navy-500: #3f5f8f;
+  --color-navy-700: #1c355c;
+  --color-navy-800: #132849;
+  --color-navy-900: #0b1b33;
+  --color-navy-950: #06101f;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  @apply bg-navy-50 text-navy-900 antialiased;
+}

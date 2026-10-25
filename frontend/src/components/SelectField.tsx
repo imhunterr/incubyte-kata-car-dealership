@@ -14,7 +14,7 @@ export function SelectField({ label, className = '', children, ...selectProps }:
       </label>
       <select
         id={id}
-        className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+        className="block w-full rounded-lg border border-navy-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
         {...selectProps}
       >
         {children}

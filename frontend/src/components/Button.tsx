@@ -1,14 +1,17 @@
 /** Buttons in the app's visual styles. */
 import type { ButtonHTMLAttributes } from 'react'
 
-type Variant = 'primary' | 'secondary' | 'danger'
+type Variant = 'primary' | 'secondary' | 'danger' | 'inverse'
 
 const VARIANT_CLASSES: Record<Variant, string> = {
   primary:
-    'bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 focus-visible:outline-indigo-600',
+    'bg-amber-400 text-navy-950 shadow-sm hover:bg-amber-300 focus-visible:outline-amber-500',
   secondary:
-    'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 focus-visible:outline-indigo-500',
+    'border border-navy-200 bg-white text-navy-800 hover:bg-navy-50 focus-visible:outline-amber-500',
   danger: 'bg-red-600 text-white shadow-sm hover:bg-red-700 focus-visible:outline-red-600',
+  /** For use on dark (navy) backgrounds. */
+  inverse:
+    'border border-navy-700 bg-navy-800 text-white hover:bg-navy-700 focus-visible:outline-amber-400',
 }
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
