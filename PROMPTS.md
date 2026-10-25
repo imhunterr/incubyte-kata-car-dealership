@@ -4,6 +4,8 @@ Raw, unedited prompts sent to AI tools while building this project, in chronolog
 
 - **Tool:** Claude Code (VS Code extension), model Claude Opus 5.5
 - Prompts are copied verbatim (typos included). Nothing is summarised or rewritten.
+- Full session transcripts (these prompts plus the assistant's replies) are in
+  [docs/transcripts/](docs/transcripts/), exported by `scripts/export-transcript.py`.
 
 ---
 
