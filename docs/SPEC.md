@@ -10,13 +10,13 @@ first, then implemented, then refactored (red → green → refactor).
 
 ### User
 
-| Field           | Type    | Rules                                                     |
-| --------------- | ------- | --------------------------------------------------------- |
-| `id`            | int     | Server-generated, unique.                                 |
-| `email`         | string  | Required, valid e-mail, unique (case-insensitive).        |
-| `password`      | string  | Required on input, min 8 characters. Never returned.      |
-| `password_hash` | string  | Argon2 hash. Stored only; plain passwords are never kept. |
-| `role`          | enum    | `user` \| `admin`. Defaults to `user`.                    |
+| Field           | Type   | Rules                                                     |
+| --------------- | ------ | --------------------------------------------------------- |
+| `id`            | int    | Server-generated, unique.                                 |
+| `email`         | string | Required, valid e-mail, unique (case-insensitive).        |
+| `password`      | string | Required on input, min 8 characters. Never returned.      |
+| `password_hash` | string | Argon2 hash. Stored only; plain passwords are never kept. |
+| `role`          | enum   | `user` \| `admin`. Defaults to `user`.                    |
 
 Registration **always** creates a `user`. Admins are created out-of-band with
 a CLI command (`python -m app.cli create-admin`), so no API caller can grant
@@ -24,14 +24,14 @@ themselves admin rights.
 
 ### Vehicle
 
-| Field      | Type    | Rules                                                                                      |
-| ---------- | ------- | ------------------------------------------------------------------------------------------ |
-| `id`       | int     | Server-generated, unique.                                                                  |
-| `make`     | string  | Required, 1–50 chars, surrounding whitespace trimmed.                                      |
-| `model`    | string  | Required, 1–50 chars, surrounding whitespace trimmed.                                      |
-| `category` | enum    | One of `sedan`, `suv`, `hatchback`, `coupe`, `convertible`, `truck`, `van`, `wagon`.         |
-| `price`    | decimal | Required, `> 0`, at most 2 decimal places, at most 10 digits. Serialised as a string.      |
-| `quantity` | int     | Units in stock. Required, `>= 0`. The database also enforces `>= 0` (CHECK constraint).    |
+| Field      | Type    | Rules                                                                                   |
+| ---------- | ------- | --------------------------------------------------------------------------------------- |
+| `id`       | int     | Server-generated, unique.                                                               |
+| `make`     | string  | Required, 1–50 chars, surrounding whitespace trimmed.                                   |
+| `model`    | string  | Required, 1–50 chars, surrounding whitespace trimmed.                                   |
+| `category` | enum    | One of `sedan`, `suv`, `hatchback`, `coupe`, `convertible`, `truck`, `van`, `wagon`.    |
+| `price`    | decimal | Required, `> 0`, at most 2 decimal places, at most 10 digits. Serialised as a string.   |
+| `quantity` | int     | Units in stock. Required, `>= 0`. The database also enforces `>= 0` (CHECK constraint). |
 
 ---
 
@@ -52,19 +52,19 @@ themselves admin rights.
 
 All responses are JSON. Errors use FastAPI's shape: `{"detail": ...}`.
 
-| Method | Path                           | Auth   | Success          | Errors                         |
-| ------ | ------------------------------ | ------ | ---------------- | ------------------------------ |
-| GET    | `/api/health`                  | —      | 200              |                                |
-| POST   | `/api/auth/register`           | —      | 201 user         | 409 duplicate, 422 invalid     |
-| POST   | `/api/auth/login`              | —      | 200 token + user | 401 bad credentials, 422       |
-| GET    | `/api/auth/me`                 | user   | 200 user         | 401                            |
-| POST   | `/api/vehicles`                | admin  | 201 vehicle      | 401, 403, 422                  |
-| GET    | `/api/vehicles`                | user   | 200 list         | 401                            |
-| GET    | `/api/vehicles/search`         | user   | 200 list         | 401, 422                       |
-| PUT    | `/api/vehicles/{id}`           | admin  | 200 vehicle      | 401, 403, 404, 422             |
-| DELETE | `/api/vehicles/{id}`           | admin  | 204              | 401, 403, 404                  |
-| POST   | `/api/vehicles/{id}/purchase`  | user   | 200 vehicle      | 401, 404, 409 out of stock     |
-| POST   | `/api/vehicles/{id}/restock`   | admin  | 200 vehicle      | 401, 403, 404, 422             |
+| Method | Path                          | Auth  | Success          | Errors                     |
+| ------ | ----------------------------- | ----- | ---------------- | -------------------------- |
+| GET    | `/api/health`                 | —     | 200              |                            |
+| POST   | `/api/auth/register`          | —     | 201 user         | 409 duplicate, 422 invalid |
+| POST   | `/api/auth/login`             | —     | 200 token + user | 401 bad credentials, 422   |
+| GET    | `/api/auth/me`                | user  | 200 user         | 401                        |
+| POST   | `/api/vehicles`               | admin | 201 vehicle      | 401, 403, 422              |
+| GET    | `/api/vehicles`               | user  | 200 list         | 401                        |
+| GET    | `/api/vehicles/search`        | user  | 200 list         | 401, 422                   |
+| PUT    | `/api/vehicles/{id}`          | admin | 200 vehicle      | 401, 403, 404, 422         |
+| DELETE | `/api/vehicles/{id}`          | admin | 204              | 401, 403, 404              |
+| POST   | `/api/vehicles/{id}/purchase` | user  | 200 vehicle      | 401, 404, 409 out of stock |
+| POST   | `/api/vehicles/{id}/restock`  | admin | 200 vehicle      | 401, 403, 404, 422         |
 
 "user" means any authenticated user (both roles). "admin" means role `admin` only.
 
@@ -80,7 +80,7 @@ All responses are JSON. Errors use FastAPI's shape: `{"detail": ...}`.
 - **List** — returns every vehicle, including ones with `quantity = 0` (the UI
   shows them with a disabled Purchase button). Ordered by `id`.
 - **Search** — query params, all optional and combinable (AND):
-  - `make`, `model`: case-insensitive *partial* match.
+  - `make`, `model`: case-insensitive _partial_ match.
   - `category`: exact match on the enum.
   - `min_price`, `max_price`: inclusive bounds, each `>= 0`.
   - `min_price > max_price` → 422.
@@ -121,6 +121,7 @@ Tests are grouped by slice, in the order they are built. `[x]` = done.
 ### Slice 1 — Auth
 
 Register
+
 - [x] Valid e-mail + password → 201 with `id`, `email`, `role = "user"`.
 - [x] Response never includes the password or its hash.
 - [x] Password is stored hashed (stored value ≠ plain text, verifies with Argon2).
@@ -132,6 +133,7 @@ Register
 - [x] A `role` sent in the body is ignored (still `user`).
 
 Login
+
 - [x] Correct credentials → 200 with bearer token and user.
 - [x] Token decodes to the right `sub` and `role`, and has an `exp`.
 - [x] Wrong password → 401.
@@ -139,6 +141,7 @@ Login
 - [x] E-mail match is case-insensitive.
 
 Token guard (exercised through `GET /api/auth/me` and an admin-only route)
+
 - [x] Valid token → 200 with the current user.
 - [x] No `Authorization` header → 401.
 - [x] Malformed header (not `Bearer …`) → 401.
@@ -149,16 +152,19 @@ Token guard (exercised through `GET /api/auth/me` and an admin-only route)
 - [x] Role is read from the database, so a demoted admin's old token no longer grants admin.
 
 Security unit tests
+
 - [x] `hash_password` / `verify_password` round-trip; wrong password fails.
 - [x] `create_access_token` / `decode_access_token` round-trip.
 
 Admin CLI
+
 - [x] `create-admin` creates a user with role `admin`.
 - [x] `create-admin` promotes an existing user to `admin`.
 
 ### Slice 2 — Vehicles CRUD
 
 Create (admin)
+
 - [ ] Valid body → 201 with generated `id`.
 - [ ] Non-admin → 403; anonymous → 401.
 - [ ] Missing field → 422 (one case per field).
@@ -168,17 +174,20 @@ Create (admin)
 - [ ] Blank / whitespace-only make or model → 422; values are trimmed.
 
 List
+
 - [ ] Empty database → 200 `[]`.
 - [ ] Returns all vehicles ordered by `id`, including zero-stock ones.
 - [ ] Anonymous → 401.
 
 Update (admin)
+
 - [ ] Valid body → 200 with updated fields; change is persisted.
 - [ ] Unknown id → 404.
 - [ ] Same validation rules as create → 422.
 - [ ] Non-admin → 403.
 
 Delete (admin)
+
 - [ ] Existing id → 204; the vehicle is gone afterwards.
 - [ ] Unknown id → 404.
 - [ ] Non-admin → 403; anonymous → 401.
@@ -198,6 +207,7 @@ Delete (admin)
 ### Slice 4 — Inventory
 
 Purchase (any user)
+
 - [ ] In stock → 200; quantity decreases by 1; change is persisted.
 - [ ] Last unit → quantity becomes 0.
 - [ ] Out of stock → 409; quantity stays 0.
@@ -207,6 +217,7 @@ Purchase (any user)
       N−1 409s, final quantity 0.
 
 Restock (admin)
+
 - [ ] Valid quantity → 200; stock increases by that amount.
 - [ ] `quantity <= 0` or missing → 422.
 - [ ] Unknown id → 404.
