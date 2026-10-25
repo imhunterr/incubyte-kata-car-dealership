@@ -1,4 +1,4 @@
-"""Tests for the admin command-line tool, ``python -m app.cli create-admin``."""
+"""Tests for the admin command-line tool, ``python -m app.cli``."""
 
 from collections.abc import Callable
 
@@ -7,9 +7,11 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.cli import main
+from app.core.categories import VehicleCategory
 from app.core.roles import Role
 from app.core.security import verify_password
 from app.models.user import User
+from app.models.vehicle import Vehicle
 from tests.helpers import DEFAULT_PASSWORD
 
 
@@ -148,3 +150,60 @@ def test_running_without_a_command_exits_with_usage_help(
         main([], session_factory=session_factory, read_password=_no_prompt)
 
     assert exit_info.value.code == 2
+
+
+# --- seed-demo ----------------------------------------------------------------
+
+
+def _vehicle_count(db_session: Session) -> int:
+    db_session.expire_all()
+    return db_session.scalar(select(func.count()).select_from(Vehicle)) or 0
+
+
+def test_seed_demo_fills_an_empty_inventory(
+    session_factory: sessionmaker[Session],
+    db_session: Session,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = main(["seed-demo"], session_factory=session_factory, read_password=_no_prompt)
+
+    assert exit_code == 0
+    count = _vehicle_count(db_session)
+    assert count >= 10
+    assert f"Added {count} demo vehicles" in capsys.readouterr().out
+
+
+def test_seed_demo_covers_every_category_and_includes_a_sold_out_vehicle(
+    session_factory: sessionmaker[Session], db_session: Session
+) -> None:
+    main(["seed-demo"], session_factory=session_factory, read_password=_no_prompt)
+
+    vehicles = db_session.scalars(select(Vehicle)).all()
+    assert {vehicle.category for vehicle in vehicles} == set(VehicleCategory)
+    assert any(vehicle.quantity == 0 for vehicle in vehicles)
+
+
+def test_seed_demo_never_touches_a_non_empty_inventory(
+    session_factory: sessionmaker[Session],
+    db_session: Session,
+    create_vehicle: Callable[..., Vehicle],
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    create_vehicle()
+
+    exit_code = main(["seed-demo"], session_factory=session_factory, read_password=_no_prompt)
+
+    assert exit_code == 0
+    assert _vehicle_count(db_session) == 1
+    assert "Inventory is not empty; no demo vehicles added" in capsys.readouterr().out
+
+
+def test_seed_demo_is_safe_to_run_twice(
+    session_factory: sessionmaker[Session], db_session: Session
+) -> None:
+    main(["seed-demo"], session_factory=session_factory, read_password=_no_prompt)
+    count_after_first_run = _vehicle_count(db_session)
+
+    main(["seed-demo"], session_factory=session_factory, read_password=_no_prompt)
+
+    assert _vehicle_count(db_session) == count_after_first_run
