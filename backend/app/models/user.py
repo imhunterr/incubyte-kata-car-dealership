@@ -2,11 +2,12 @@
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, String, func
+from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.roles import Role
 from app.db.base import Base
+from app.db.types import string_enum
 
 
 class User(Base):
@@ -23,16 +24,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(320), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[Role] = mapped_column(
-        # Stored as a short string with a CHECK constraint rather than a native
-        # PostgreSQL enum, so adding a role later is a simple migration.
-        Enum(
-            Role,
-            name="user_role",
-            native_enum=False,
-            create_constraint=True,
-            length=20,
-            values_callable=lambda roles: [role.value for role in roles],
-        ),
+        string_enum(Role, name="user_role"),
         default=Role.USER,
         server_default=Role.USER.value,
     )
