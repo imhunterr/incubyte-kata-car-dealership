@@ -231,6 +231,17 @@ Restock (admin)
 - [x] Unknown id → 404.
 - [x] Non-admin → 403; anonymous → 401.
 
+### API polish
+
+- [x] CORS: only origins listed in `CORS_ORIGINS` are allowed; none by default.
+- [x] Every operation in the OpenAPI schema is either public (health,
+      register, login) or returns 401 anonymously; exactly the admin
+      operations return 403 to regular users.
+- [x] `seed-demo` fills an empty inventory (every category, one sold out) and
+      never touches a non-empty one.
+- [x] Migrations match the models and can be applied, reverted and re-applied
+      (CI and `make migrations-check`).
+
 ### Slice 5 — Frontend
 
 - [ ] Login form: submits credentials, stores the session, redirects to the dashboard.

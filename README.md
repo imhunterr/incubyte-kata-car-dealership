@@ -34,7 +34,14 @@ make dev-api    # applies migrations, then serves the API on http://localhost:80
 make dev-web    # serves the SPA on http://localhost:5173 (proxies /api to the API)
 ```
 
-Run `make help` to see every available task.
+Run `make help` to see every available task. Interactive API docs (Swagger UI)
+are served at http://localhost:8000/docs while the API is running.
+
+### Demo data
+
+```bash
+make seed       # adds 12 sample vehicles, only if the inventory is empty
+```
 
 ### Creating an admin
 
