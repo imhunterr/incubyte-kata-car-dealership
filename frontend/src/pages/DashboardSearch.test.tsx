@@ -75,6 +75,58 @@ describe('DashboardPage: search and filters', () => {
     expect(query).toEqual({ model: 'cor', min_price: '20000', max_price: '25000' })
   })
 
+  it('offers fuel types, transmissions, model years and mileage caps', async () => {
+    await renderLoadedDashboard()
+
+    const optionsOf = (label: string) =>
+      within(screen.getByLabelText(label))
+        .getAllByRole('option')
+        .map((option) => option.textContent)
+    expect(optionsOf('Fuel type')).toEqual([
+      'Any fuel',
+      'Petrol',
+      'Diesel',
+      'CNG',
+      'Electric',
+      'Hybrid',
+    ])
+    expect(optionsOf('Transmission')).toEqual(['Any transmission', 'Manual', 'Automatic'])
+    expect(optionsOf('Model year')).toContain('2020 or newer')
+    expect(optionsOf('Mileage')).toEqual([
+      'Any mileage',
+      'Up to 10,000 km',
+      'Up to 25,000 km',
+      'Up to 50,000 km',
+      'Up to 75,000 km',
+      'Up to 100,000 km',
+    ])
+  })
+
+  it('searches by fuel type, transmission, model year and mileage', async () => {
+    let query: Record<string, string> = {}
+    server.use(
+      http.get('*/api/vehicles/search', ({ request }) => {
+        query = Object.fromEntries(new URL(request.url).searchParams)
+        return HttpResponse.json([corolla])
+      }),
+    )
+    const { user } = await renderLoadedDashboard()
+
+    await user.selectOptions(screen.getByLabelText('Fuel type'), 'hybrid')
+    await user.selectOptions(screen.getByLabelText('Transmission'), 'automatic')
+    await user.selectOptions(screen.getByLabelText('Model year'), '2020')
+    await user.selectOptions(screen.getByLabelText('Mileage'), '50000')
+    await user.click(screen.getByRole('button', { name: 'Search' }))
+
+    await screen.findByText('1 vehicle')
+    expect(query).toEqual({
+      fuel_type: 'hybrid',
+      transmission: 'automatic',
+      min_year: '2020',
+      max_mileage: '50000',
+    })
+  })
+
   it('explains when nothing matches', async () => {
     server.use(http.get('*/api/vehicles/search', () => HttpResponse.json([])))
     const { user } = await renderLoadedDashboard()
