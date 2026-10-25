@@ -23,7 +23,7 @@ export function DashboardHero({ filters, brands, onFiltersChange }: DashboardHer
       <QuickFilters filters={filters} brands={brands} onChange={onFiltersChange} />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-16 -right-16 h-64 w-64 rounded-full bg-amber-400/10"
+        className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-amber-400/20 blur-3xl"
       />
     </div>
   )

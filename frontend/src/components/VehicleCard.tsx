@@ -72,12 +72,12 @@ export function VehicleCard({
           </button>
         </div>
 
-        <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-600">
-          {details.map((detail, index) => (
-            <li key={detail} className="flex items-center gap-3">
-              {index > 0 && (
-                <span aria-hidden="true" className="h-1 w-1 rounded-full bg-slate-300" />
-              )}
+        <ul className="mt-3 flex flex-wrap gap-1.5">
+          {details.map((detail) => (
+            <li
+              key={detail}
+              className="rounded-md bg-navy-50 px-2 py-0.5 text-xs font-medium text-navy-700"
+            >
               {detail}
             </li>
           ))}
