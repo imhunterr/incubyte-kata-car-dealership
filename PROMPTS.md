@@ -26,3 +26,14 @@ Okay, few things to keep in mind -0
 I have logged into github. There might be a rename issue from github's side tho. However this device is paired with the require gh account so you can go ahead with the repo creation and the push, it should be fine.
 
 Lets get started.
+
+---
+
+## Prompt 3 — 2026-10-25 20:49:48 IST
+
+"The research doc is not in the repo, and never was publicly." - yes. my point focused also on keeping its refernces out of comments in the code. We need exhaustive comments but they should not refernce it.
+ 
+Regarding the decisions-
+1. Yes admin only is fine.
+
+Since we are at it, can you lay out how many phases are we targetting and what they will be? Once that is in place, i will give you th egreenlight to move forward.
