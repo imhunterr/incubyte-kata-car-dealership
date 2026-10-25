@@ -88,6 +88,10 @@ The backend reads its settings from environment variables or `backend/.env`
   succeed as there were units, with the rest getting 409. The first,
   read-then-write version failed that test (10 sales from 3 units), which is
   why the atomic version exists.
+- **Richer vehicle data.** Besides the required make, model, category, price
+  and quantity, vehicles record model year, fuel type, transmission and
+  mileage, which buyers can also filter on. The migration that added them
+  fills in values for existing rows before making the columns required.
 - **Money is exact.** Prices are `Decimal` values in a `NUMERIC(10, 2)` column
   and are sent over JSON as strings (`"21999.99"`), so no floating-point
   rounding ever touches them.

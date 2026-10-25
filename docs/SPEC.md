@@ -263,15 +263,15 @@ Restock (admin)
 
 ### Slice 4b — Richer vehicle data
 
-- [ ] Create/update/read include `year`, `fuel_type`, `transmission`, `mileage_km`.
-- [ ] Each new field is required on create and update → 422 when missing.
-- [ ] `year` outside 1990..next year, unknown fuel type or transmission,
+- [x] Create/update/read include `year`, `fuel_type`, `transmission`, `mileage_km`.
+- [x] Each new field is required on create and update → 422 when missing.
+- [x] `year` outside 1990..next year, unknown fuel type or transmission,
       mileage outside 0..1,000,000 or non-integer → 422.
-- [ ] Existing vehicles get sensible values from the migration.
-- [ ] The database rejects negative mileage (CHECK constraint).
-- [ ] Search by `fuel_type`, `transmission`, `min_year`, `max_mileage`,
+- [x] Existing vehicles get sensible values from the migration.
+- [x] The database rejects negative mileage (CHECK constraint).
+- [x] Search by `fuel_type`, `transmission`, `min_year`, `max_mileage`,
       combined with the other filters; invalid values → 422.
-- [ ] Demo data covers every fuel type and both transmissions.
+- [x] Demo data covers every fuel type and both transmissions.
 
 ### Slice 5 — Frontend
 
