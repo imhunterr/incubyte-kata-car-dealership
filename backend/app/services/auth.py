@@ -2,9 +2,15 @@
 
 from dataclasses import dataclass
 
-from app.core.errors import InvalidCredentialsError
+from app.core.errors import InvalidCredentialsError, NotAuthenticatedError
 from app.core.roles import Role
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import (
+    InvalidTokenError,
+    create_access_token,
+    decode_access_token,
+    hash_password,
+    verify_password,
+)
 from app.models.user import User
 from app.repositories.users import UserRepository
 
@@ -59,6 +65,27 @@ class AuthService:
 
         token = create_access_token(user_id=user.id, role=user.role)
         return LoginResult(access_token=token, user=user)
+
+    def authenticate(self, access_token: str) -> User:
+        """Resolve an access token to the user it was issued for.
+
+        The user is re-read from the database on every request, so a deleted
+        account loses access immediately and role changes take effect without
+        waiting for old tokens to expire.
+
+        Raises:
+            NotAuthenticatedError: If the token is invalid or its user no
+                longer exists.
+        """
+        try:
+            claims = decode_access_token(access_token)
+        except InvalidTokenError as error:
+            raise NotAuthenticatedError from error
+
+        user = self._users.get_by_id(claims.user_id)
+        if user is None:
+            raise NotAuthenticatedError
+        return user
 
 
 def normalize_email(email: str) -> str:

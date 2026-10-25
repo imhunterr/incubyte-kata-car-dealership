@@ -16,6 +16,10 @@ class UserRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
 
+    def get_by_id(self, user_id: int) -> User | None:
+        """Return the user with this id, if any."""
+        return self._session.get(User, user_id)
+
     def get_by_email(self, email: str) -> User | None:
         """Return the user with exactly this (already normalised) e-mail, if any."""
         return self._session.scalars(select(User).where(User.email == email)).one_or_none()

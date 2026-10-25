@@ -6,7 +6,7 @@ domain errors and turned into HTTP responses by :mod:`app.api.errors`.
 
 from fastapi import APIRouter, status
 
-from app.api.deps import AuthServiceDep
+from app.api.deps import AuthServiceDep, CurrentUserDep
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserRead
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -33,3 +33,12 @@ def login(body: LoginRequest, auth: AuthServiceDep) -> TokenResponse:
     return TokenResponse(
         access_token=result.access_token, user=UserRead.model_validate(result.user)
     )
+
+
+@router.get(
+    "/me",
+    responses={status.HTTP_401_UNAUTHORIZED: {"description": "Could not validate credentials"}},
+)
+def me(user: CurrentUserDep) -> UserRead:
+    """Return the user the bearer token belongs to."""
+    return UserRead.model_validate(user)

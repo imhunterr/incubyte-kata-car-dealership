@@ -18,3 +18,11 @@ class InvalidCredentialsError(DomainError):
 
     Deliberately does not say *which* part was wrong.
     """
+
+
+class NotAuthenticatedError(DomainError):
+    """No valid access token: missing, malformed, forged, expired, or its user is gone."""
+
+
+class AdminRequiredError(DomainError):
+    """The caller is authenticated but the action is reserved for admins."""

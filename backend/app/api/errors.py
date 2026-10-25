@@ -10,7 +10,13 @@ from dataclasses import dataclass, field
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from app.core.errors import DomainError, EmailAlreadyRegisteredError, InvalidCredentialsError
+from app.core.errors import (
+    AdminRequiredError,
+    DomainError,
+    EmailAlreadyRegisteredError,
+    InvalidCredentialsError,
+    NotAuthenticatedError,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +37,12 @@ ERROR_RESPONSES: dict[type[DomainError], ErrorResponse] = {
         "Invalid email or password",
         headers={"WWW-Authenticate": "Bearer"},
     ),
+    NotAuthenticatedError: ErrorResponse(
+        status.HTTP_401_UNAUTHORIZED,
+        "Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    ),
+    AdminRequiredError: ErrorResponse(status.HTTP_403_FORBIDDEN, "Admin privileges required"),
 }
 
 
