@@ -1,9 +1,24 @@
 """Registration and authentication use cases."""
 
+from dataclasses import dataclass
+
+from app.core.errors import InvalidCredentialsError
 from app.core.roles import Role
-from app.core.security import hash_password
+from app.core.security import create_access_token, hash_password, verify_password
 from app.models.user import User
 from app.repositories.users import UserRepository
+
+# Verified against when the e-mail is unknown, so a failed login takes about
+# as long whether or not the account exists (no user enumeration by timing).
+_DUMMY_PASSWORD_HASH = hash_password("not-a-real-password")
+
+
+@dataclass(frozen=True, slots=True)
+class LoginResult:
+    """A successful login: the issued access token and the user it belongs to."""
+
+    access_token: str
+    user: User
 
 
 class AuthService:
@@ -27,6 +42,23 @@ class AuthService:
             role=Role.USER,
         )
         return self._users.add(user)
+
+    def login(self, email: str, password: str) -> LoginResult:
+        """Check credentials and issue an access token.
+
+        Raises:
+            InvalidCredentialsError: If the e-mail is unknown or the password
+                is wrong (callers cannot tell which).
+        """
+        user = self._users.get_by_email(normalize_email(email))
+        if user is None:
+            verify_password(password, _DUMMY_PASSWORD_HASH)
+            raise InvalidCredentialsError
+        if not verify_password(password, user.password_hash):
+            raise InvalidCredentialsError
+
+        token = create_access_token(user_id=user.id, role=user.role)
+        return LoginResult(access_token=token, user=user)
 
 
 def normalize_email(email: str) -> str:

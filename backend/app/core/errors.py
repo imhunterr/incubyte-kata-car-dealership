@@ -11,3 +11,10 @@ class DomainError(Exception):
 
 class EmailAlreadyRegisteredError(DomainError):
     """An account with this e-mail address already exists."""
+
+
+class InvalidCredentialsError(DomainError):
+    """The e-mail/password pair does not match any account.
+
+    Deliberately does not say *which* part was wrong.
+    """

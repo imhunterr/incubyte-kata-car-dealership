@@ -29,3 +29,22 @@ class UserRead(BaseModel):
     id: int
     email: str
     role: Role
+
+
+class LoginRequest(BaseModel):
+    """Body of ``POST /api/auth/login``.
+
+    The e-mail is not format-validated here: a malformed address simply fails
+    to match an account and gets the same 401 as any other bad credentials.
+    """
+
+    email: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    """Successful login: a bearer token plus the authenticated user."""
+
+    access_token: str
+    token_type: str = "bearer"
+    user: UserRead

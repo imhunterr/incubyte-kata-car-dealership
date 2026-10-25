@@ -1,5 +1,6 @@
 """Data access for :class:`~app.models.user.User`."""
 
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -14,6 +15,10 @@ class UserRepository:
 
     def __init__(self, session: Session) -> None:
         self._session = session
+
+    def get_by_email(self, email: str) -> User | None:
+        """Return the user with exactly this (already normalised) e-mail, if any."""
+        return self._session.scalars(select(User).where(User.email == email)).one_or_none()
 
     def add(self, user: User) -> User:
         """Persist a new user and return it with its generated id.
