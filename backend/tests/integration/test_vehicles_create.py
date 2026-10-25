@@ -1,5 +1,6 @@
 """Tests for adding a vehicle, ``POST /api/vehicles`` (admin only)."""
 
+from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -7,7 +8,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.categories import VehicleCategory
+from app.core.categories import FuelType, Transmission, VehicleCategory
 from app.models.vehicle import Vehicle
 from tests.helpers import VEHICLES_URL
 
@@ -17,7 +18,13 @@ VALID_VEHICLE = {
     "category": "sedan",
     "price": "21999.99",
     "quantity": 4,
+    "year": 2022,
+    "fuel_type": "petrol",
+    "transmission": "automatic",
+    "mileage_km": 15000,
 }
+
+NEXT_YEAR = date.today().year + 1
 
 
 def test_admin_creates_a_vehicle_and_gets_201_with_its_id(
@@ -42,6 +49,10 @@ def test_created_vehicle_is_persisted(
     assert vehicle.category is VehicleCategory.SEDAN
     assert vehicle.price == Decimal("21999.99")
     assert vehicle.quantity == 4
+    assert vehicle.year == 2022
+    assert vehicle.fuel_type is FuelType.PETROL
+    assert vehicle.transmission is Transmission.AUTOMATIC
+    assert vehicle.mileage_km == 15000
 
 
 def test_price_may_be_sent_as_a_json_number(
@@ -173,3 +184,72 @@ def test_make_and_model_are_trimmed(client: TestClient, admin_headers: dict[str,
     assert response.status_code == 201
     assert response.json()["make"] == "Toyota"
     assert response.json()["model"] == "Corolla"
+
+
+# --- Richer vehicle data ------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("year", 1989),
+        ("year", NEXT_YEAR + 1),
+        ("year", "2020"),
+        ("year", 2020.5),
+        ("fuel_type", "coal"),
+        ("fuel_type", "PETROL"),
+        ("transmission", "cvt"),
+        ("mileage_km", -1),
+        ("mileage_km", 1_000_001),
+        ("mileage_km", 1.5),
+        ("mileage_km", "100"),
+    ],
+    ids=[
+        "year-too-old",
+        "year-too-new",
+        "year-string",
+        "year-fraction",
+        "fuel-unknown",
+        "fuel-wrong-case",
+        "transmission-unknown",
+        "mileage-negative",
+        "mileage-too-high",
+        "mileage-fraction",
+        "mileage-string",
+    ],
+)
+def test_invalid_vehicle_details_are_rejected(
+    client: TestClient, admin_headers: dict[str, str], field: str, value: object
+) -> None:
+    response = client.post(
+        VEHICLES_URL, json={**VALID_VEHICLE, field: value}, headers=admin_headers
+    )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [("year", 1990), ("year", NEXT_YEAR), ("mileage_km", 0), ("mileage_km", 1_000_000)],
+    ids=["oldest-year", "next-year", "new-car", "max-mileage"],
+)
+def test_vehicle_details_at_the_boundaries_are_accepted(
+    client: TestClient, admin_headers: dict[str, str], field: str, value: int
+) -> None:
+    response = client.post(
+        VEHICLES_URL, json={**VALID_VEHICLE, field: value}, headers=admin_headers
+    )
+
+    assert response.status_code == 201
+    assert response.json()[field] == value
+
+
+@pytest.mark.parametrize("fuel_type", ["petrol", "diesel", "cng", "electric", "hybrid"])
+def test_every_fuel_type_is_accepted(
+    client: TestClient, admin_headers: dict[str, str], fuel_type: str
+) -> None:
+    response = client.post(
+        VEHICLES_URL, json={**VALID_VEHICLE, "fuel_type": fuel_type}, headers=admin_headers
+    )
+
+    assert response.status_code == 201

@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.core.categories import VehicleCategory
+from app.core.categories import FuelType, VehicleCategory
 from app.models.vehicle import Vehicle
 from tests.helpers import vehicle_url
 
@@ -20,6 +20,10 @@ UPDATED_VEHICLE = {
     "category": "hatchback",
     "price": "24999.00",
     "quantity": 7,
+    "year": 2023,
+    "fuel_type": "hybrid",
+    "transmission": "automatic",
+    "mileage_km": 4200,
 }
 
 
@@ -49,6 +53,9 @@ def test_update_is_persisted(
     assert vehicle.category is VehicleCategory.HATCHBACK
     assert vehicle.price == Decimal("24999.00")
     assert vehicle.quantity == 7
+    assert vehicle.year == 2023
+    assert vehicle.fuel_type is FuelType.HYBRID
+    assert vehicle.mileage_km == 4200
 
 
 def test_update_leaves_other_vehicles_untouched(
@@ -89,8 +96,22 @@ def test_non_numeric_id_returns_422(client: TestClient, admin_headers: dict[str,
         {"quantity": -1},
         {"make": "   "},
         {"category": "spaceship"},
+        {"year": 1900},
+        {"fuel_type": "steam"},
+        {"transmission": "cvt"},
+        {"mileage_km": -5},
     ],
-    ids=["zero-price", "3-decimals", "negative-quantity", "blank-make", "unknown-category"],
+    ids=[
+        "zero-price",
+        "3-decimals",
+        "negative-quantity",
+        "blank-make",
+        "unknown-category",
+        "ancient-year",
+        "unknown-fuel",
+        "unknown-transmission",
+        "negative-mileage",
+    ],
 )
 def test_update_applies_the_same_validation_as_create(
     client: TestClient,

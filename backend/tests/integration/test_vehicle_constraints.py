@@ -10,7 +10,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.categories import VehicleCategory
+from app.core.categories import FuelType, Transmission, VehicleCategory
 from app.models.vehicle import Vehicle
 
 
@@ -21,6 +21,10 @@ def _vehicle(**overrides: object) -> Vehicle:
         "category": VehicleCategory.SEDAN,
         "price": Decimal("21999.99"),
         "quantity": 1,
+        "year": 2022,
+        "fuel_type": FuelType.PETROL,
+        "transmission": Transmission.MANUAL,
+        "mileage_km": 1000,
     }
     return Vehicle(**(fields | overrides))
 
@@ -37,4 +41,11 @@ def test_database_rejects_non_positive_price(db_session: Session, price: Decimal
     db_session.add(_vehicle(price=price))
 
     with pytest.raises(IntegrityError, match="ck_vehicles_price_positive"):
+        db_session.commit()
+
+
+def test_database_rejects_negative_mileage(db_session: Session) -> None:
+    db_session.add(_vehicle(mileage_km=-1))
+
+    with pytest.raises(IntegrityError, match="ck_vehicles_mileage_non_negative"):
         db_session.commit()

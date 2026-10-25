@@ -22,7 +22,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.categories import VehicleCategory
+from app.core.categories import FuelType, Transmission, VehicleCategory
 from app.core.roles import Role
 from app.core.security import hash_password
 from app.db.base import Base
@@ -134,7 +134,7 @@ def create_vehicle(db_session: Session) -> Callable[..., Vehicle]:
     """Factory that inserts a vehicle directly into the database.
 
     Usage: ``create_vehicle(make="Honda", quantity=0)``. Every argument is
-    optional and defaults to an in-stock Toyota Corolla sedan.
+    optional and defaults to an in-stock, 2022 petrol manual Toyota Corolla.
     """
 
     def _create_vehicle(
@@ -143,9 +143,21 @@ def create_vehicle(db_session: Session) -> Callable[..., Vehicle]:
         category: VehicleCategory = VehicleCategory.SEDAN,
         price: Decimal | str = "21999.99",
         quantity: int = 3,
+        year: int = 2022,
+        fuel_type: FuelType = FuelType.PETROL,
+        transmission: Transmission = Transmission.MANUAL,
+        mileage_km: int = 12000,
     ) -> Vehicle:
         vehicle = Vehicle(
-            make=make, model=model, category=category, price=Decimal(price), quantity=quantity
+            make=make,
+            model=model,
+            category=category,
+            price=Decimal(price),
+            quantity=quantity,
+            year=year,
+            fuel_type=fuel_type,
+            transmission=transmission,
+            mileage_km=mileage_km,
         )
         db_session.add(vehicle)
         db_session.commit()

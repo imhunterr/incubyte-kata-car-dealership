@@ -4,7 +4,7 @@ from collections.abc import Callable
 
 from fastapi.testclient import TestClient
 
-from app.core.categories import VehicleCategory
+from app.core.categories import FuelType, Transmission, VehicleCategory
 from app.models.vehicle import Vehicle
 from tests.helpers import VEHICLES_URL
 
@@ -34,7 +34,15 @@ def test_lists_vehicles_with_all_their_fields(
     client: TestClient, user_headers: dict[str, str], create_vehicle: Callable[..., Vehicle]
 ) -> None:
     vehicle = create_vehicle(
-        make="Mazda", model="MX-5", category=VehicleCategory.CONVERTIBLE, price="31500", quantity=2
+        make="Mazda",
+        model="MX-5",
+        category=VehicleCategory.CONVERTIBLE,
+        price="31500",
+        quantity=2,
+        year=2021,
+        fuel_type=FuelType.PETROL,
+        transmission=Transmission.MANUAL,
+        mileage_km=8000,
     )
 
     response = client.get(VEHICLES_URL, headers=user_headers)
@@ -47,6 +55,10 @@ def test_lists_vehicles_with_all_their_fields(
             "category": "convertible",
             "price": "31500.00",
             "quantity": 2,
+            "year": 2021,
+            "fuel_type": "petrol",
+            "transmission": "manual",
+            "mileage_km": 8000,
         }
     ]
 
