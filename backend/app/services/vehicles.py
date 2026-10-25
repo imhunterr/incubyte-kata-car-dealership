@@ -48,15 +48,19 @@ class VehicleService:
     def purchase(self, vehicle_id: int) -> Vehicle:
         """Sell one unit of a vehicle and return it with the reduced stock.
 
+        Safe under concurrency: the decrement is a single atomic update (see
+        :meth:`VehicleRepository.take_one_from_stock`).
+
         Raises:
             VehicleNotFoundError: If no vehicle has this id.
             OutOfStockError: If the vehicle has no units left.
         """
-        vehicle = self._get_or_raise(vehicle_id)
-        if vehicle.quantity == 0:
-            raise OutOfStockError(vehicle_id)
-        vehicle.quantity -= 1
-        return self._vehicles.save(vehicle)
+        vehicle = self._vehicles.take_one_from_stock(vehicle_id)
+        if vehicle is not None:
+            return vehicle
+        # Nothing was updated: find out why, for the right error.
+        self._get_or_raise(vehicle_id)
+        raise OutOfStockError(vehicle_id)
 
     def _get_or_raise(self, vehicle_id: int) -> Vehicle:
         vehicle = self._vehicles.get(vehicle_id)

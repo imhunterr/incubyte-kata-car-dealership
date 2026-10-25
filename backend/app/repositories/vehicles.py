@@ -3,7 +3,7 @@
 from collections.abc import Sequence
 from decimal import Decimal
 
-from sqlalchemy import ColumnElement, select
+from sqlalchemy import ColumnElement, select, update
 from sqlalchemy.orm import InstrumentedAttribute, Session
 
 from app.core.categories import VehicleCategory
@@ -67,6 +67,35 @@ class VehicleRepository:
         """Commit changes made to an already-persisted vehicle and re-read it."""
         self._session.commit()
         self._session.refresh(vehicle)
+        return vehicle
+
+    def take_one_from_stock(self, vehicle_id: int) -> Vehicle | None:
+        """Atomically decrement a vehicle's stock by one, if any is left.
+
+        Runs a single conditional statement::
+
+            UPDATE vehicles SET quantity = quantity - 1
+            WHERE id = :id AND quantity > 0
+            RETURNING *
+
+        The database evaluates the condition and the decrement together while
+        holding the row lock, so concurrent purchases can never both take the
+        last unit, and stock can never go below zero. (Reading the quantity in
+        Python and writing it back would let two requests both see "1 left".)
+
+        Returns:
+            The updated vehicle, or ``None`` if it does not exist or is out of
+            stock (the caller distinguishes the two).
+        """
+        statement = (
+            update(Vehicle)
+            .where(Vehicle.id == vehicle_id, Vehicle.quantity > 0)
+            .values(quantity=Vehicle.quantity - 1)
+            .returning(Vehicle)
+            .execution_options(populate_existing=True)
+        )
+        vehicle = self._session.scalars(statement).one_or_none()
+        self._session.commit()
         return vehicle
 
     def delete(self, vehicle: Vehicle) -> None:
