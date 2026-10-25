@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 
-from app.api.routes import health
+from app.api.routes import auth, health
 
 
 def create_app() -> FastAPI:
@@ -16,6 +16,7 @@ def create_app() -> FastAPI:
         version="0.1.0",
     )
     app.include_router(health.router, prefix="/api")
+    app.include_router(auth.router, prefix="/api")
     return app
 
 
