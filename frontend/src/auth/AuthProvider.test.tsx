@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest'
 import { ApiError } from '../api/client'
 import { server } from '../test/server'
 import { customer, SESSION_KEY, storeSession } from '../test/fixtures'
-import { AuthProvider, useAuth } from './AuthContext'
+import { AuthProvider } from './AuthProvider'
+import { useAuth } from './useAuth'
 
 function renderAuth() {
   return renderHook(() => useAuth(), { wrapper: AuthProvider })
