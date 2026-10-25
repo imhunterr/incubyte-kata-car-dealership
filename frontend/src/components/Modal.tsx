@@ -5,6 +5,7 @@
  * - Focus moves to the first form field (or the first button) on open, and
  *   back to whatever was focused before when it closes.
  * - Escape or a click on the backdrop closes it.
+ * - The page behind it does not scroll while it is open.
  */
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 
@@ -24,6 +25,14 @@ export function Modal({ title, onClose, children }: ModalProps) {
     const firstTarget = dialog?.querySelector<HTMLElement>('input, select, textarea, button')
     firstTarget?.focus()
     return () => previouslyFocused?.focus()
+  }, [])
+
+  useEffect(() => {
+    const { overflow } = document.body.style
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = overflow
+    }
   }, [])
 
   useEffect(() => {
