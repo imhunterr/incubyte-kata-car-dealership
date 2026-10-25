@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 
 from app.api.errors import register_error_handlers
-from app.api.routes import auth, health
+from app.api.routes import auth, health, vehicles
 
 
 def create_app() -> FastAPI:
@@ -19,6 +19,7 @@ def create_app() -> FastAPI:
     register_error_handlers(app)
     app.include_router(health.router, prefix="/api")
     app.include_router(auth.router, prefix="/api")
+    app.include_router(vehicles.router, prefix="/api")
     return app
 
 

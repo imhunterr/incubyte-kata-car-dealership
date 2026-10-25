@@ -19,7 +19,9 @@ from app.core.roles import Role
 from app.db.session import get_session
 from app.models.user import User
 from app.repositories.users import UserRepository
+from app.repositories.vehicles import VehicleRepository
 from app.services.auth import AuthService
+from app.services.vehicles import VehicleService
 
 SessionDep = Annotated[Session, Depends(get_session)]
 """A database session scoped to the current request."""
@@ -31,6 +33,14 @@ def get_auth_service(session: SessionDep) -> AuthService:
 
 
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+
+
+def get_vehicle_service(session: SessionDep) -> VehicleService:
+    """Build the vehicle service on top of the request's session."""
+    return VehicleService(VehicleRepository(session))
+
+
+VehicleServiceDep = Annotated[VehicleService, Depends(get_vehicle_service)]
 
 # auto_error=False: a missing or non-Bearer header yields None instead of
 # FastAPI's default error, so every authentication failure goes through the
