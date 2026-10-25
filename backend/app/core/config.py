@@ -1,8 +1,10 @@
 """Application configuration, read from environment variables or a ``.env`` file."""
 
 from functools import lru_cache
+from typing import Annotated
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -22,6 +24,20 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "local-development-only-insecure-jwt-secret"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
+
+    # Extra browser origins allowed to call the API (CORS), e.g.
+    # CORS_ORIGINS="https://app.example.com,https://admin.example.com".
+    # Empty by default: in development the SPA uses the Vite proxy, which is
+    # same-origin and needs no CORS.
+    cors_origins: Annotated[list[str], NoDecode] = []
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _split_comma_separated(cls, value: object) -> object:
+        """Accept a comma-separated string (from the environment) or a list."""
+        if isinstance(value, str):
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return value
 
 
 @lru_cache

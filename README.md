@@ -53,14 +53,15 @@ The backend reads its settings from environment variables or `backend/.env`
 (see [backend/.env.example](backend/.env.example)). The defaults match the
 `docker compose` database, so no configuration is needed for local use.
 
-| Variable                      | Purpose                                                                |
-| ----------------------------- | ---------------------------------------------------------------------- |
-| `DATABASE_URL`                | Database used by the running API.                                      |
-| `TEST_DATABASE_URL`           | Database used by the test suite (recreated).                           |
-| `JWT_SECRET_KEY`              | Signs access tokens. **Set a strong value outside local development.** |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token lifetime (default `60`).                                  |
-| `DB_PORT`                     | Host port for the compose PostgreSQL (`5434`).                         |
-| `VITE_API_PROXY`              | API URL the Vite dev server proxies `/api` to.                         |
+| Variable                      | Purpose                                                                           |
+| ----------------------------- | --------------------------------------------------------------------------------- |
+| `DATABASE_URL`                | Database used by the running API.                                                 |
+| `TEST_DATABASE_URL`           | Database used by the test suite (recreated).                                      |
+| `JWT_SECRET_KEY`              | Signs access tokens. **Set a strong value outside local development.**            |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token lifetime (default `60`).                                             |
+| `CORS_ORIGINS`                | Extra browser origins allowed to call the API, comma-separated (none by default). |
+| `DB_PORT`                     | Host port for the compose PostgreSQL (`5434`).                                    |
+| `VITE_API_PROXY`              | API URL the Vite dev server proxies `/api` to.                                    |
 
 ## Design decisions
 
