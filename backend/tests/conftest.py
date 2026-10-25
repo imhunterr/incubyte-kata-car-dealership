@@ -27,7 +27,7 @@ from app.db.base import Base
 from app.db.session import get_session
 from app.main import create_app
 from app.models.user import User
-from tests.helpers import DEFAULT_PASSWORD
+from tests.helpers import DEFAULT_PASSWORD, auth_headers
 
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
@@ -112,3 +112,15 @@ def create_user(db_session: Session) -> Callable[..., User]:
         return user
 
     return _create_user
+
+
+@pytest.fixture
+def admin_headers(create_user: Callable[..., User]) -> dict[str, str]:
+    """``Authorization`` header for a freshly created admin."""
+    return auth_headers(create_user(email="admin@example.com", role=Role.ADMIN))
+
+
+@pytest.fixture
+def user_headers(create_user: Callable[..., User]) -> dict[str, str]:
+    """``Authorization`` header for a freshly created regular user."""
+    return auth_headers(create_user(email="customer@example.com", role=Role.USER))
