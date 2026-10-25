@@ -10,7 +10,7 @@ by default the ``dealership_test`` database created by ``docker compose``).
 """
 
 import os
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import pytest
@@ -21,15 +21,21 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.core.roles import Role
+from app.core.security import hash_password
 from app.db.base import Base
 from app.db.session import get_session
 from app.main import create_app
+from app.models.user import User
 
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
     "postgresql+psycopg://dealership:dealership@localhost:5434/dealership_test",
 )
 BACKEND_DIR = Path(__file__).resolve().parent.parent
+
+DEFAULT_PASSWORD = "correct-horse"
+"""Password given to users made by the ``create_user`` fixture unless overridden."""
 
 
 @pytest.fixture(scope="session")
@@ -87,3 +93,24 @@ def client(app: FastAPI) -> Iterator[TestClient]:
     """An HTTP client for the test application."""
     with TestClient(app) as test_client:
         yield test_client
+
+
+@pytest.fixture
+def create_user(db_session: Session) -> Callable[..., User]:
+    """Factory that inserts a user directly into the database.
+
+    Usage: ``create_user(email="bob@example.com", role=Role.ADMIN)``. Every
+    argument is optional; the password defaults to :data:`DEFAULT_PASSWORD`.
+    """
+
+    def _create_user(
+        email: str = "user@example.com",
+        password: str = DEFAULT_PASSWORD,
+        role: Role = Role.USER,
+    ) -> User:
+        user = User(email=email, password_hash=hash_password(password), role=role)
+        db_session.add(user)
+        db_session.commit()
+        return user
+
+    return _create_user
